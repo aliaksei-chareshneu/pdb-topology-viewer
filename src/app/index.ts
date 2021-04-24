@@ -36,6 +36,7 @@ class PdbTopologyViewerPlugin {
 
     subscribeEvents = true;
 
+    // Not used here
     render(target: HTMLElement, options:{entityId: string, entryId: string, chainId?: string, subscribeEvents?:boolean, displayStyle?: string, errorStyle?: string, menuStyle?: string}) {
         if(options && typeof options.displayStyle != 'undefined' && options.displayStyle != null) this.displayStyle += options.displayStyle;
         if(options && typeof options.errorStyle != 'undefined' && options.errorStyle != null) this.errorStyle += options.errorStyle;
@@ -67,6 +68,7 @@ class PdbTopologyViewerPlugin {
         
     }
 
+    // Not used here
     initPainting(){
         this.getApiData(this.entryId, this.chainId).then(result => {
             if(result){
@@ -149,6 +151,7 @@ class PdbTopologyViewerPlugin {
         )
     }
 
+    // Returns array of sequence letters
     getPDBSequenceArray(entities: any[]) {
         const totalEntities = entities.length;
         for(let i=0; i < totalEntities; i++){
@@ -157,7 +160,8 @@ class PdbTopologyViewerPlugin {
             }
         }
     }
-
+    // Returns a new array, consisting of sub-arrays, each of which is a "chunk" of set length ("len") based on the input array
+	// E.g. chunkArray([1, 2, 3, 4, 5], 2) => [[1, 2], [3, 4], [5]]
     chunkArray(arr: any[], len: number) {
 			
         let chunks = [], i = 0,	n = arr.length;
@@ -167,6 +171,7 @@ class PdbTopologyViewerPlugin {
         return chunks;
     }
 
+    //Based on Topology data from PDBe (i.e. coordinates of SSEs), creates scale functions and zoom function
     getDomainRange(){
         let allCordinatesArray: any[] = [];
         const topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
@@ -177,12 +182,16 @@ class PdbTopologyViewerPlugin {
                 topologyData[secStrType].forEach((secStrData: any) => {
                     if(typeof secStrData.path !== 'undefined' && secStrData.path.length > 0){
                         allCordinatesArray= allCordinatesArray.concat(this.chunkArray(secStrData.path, 2));
+                        // something like [[1, 2], [2, 4], [130, 5]] etc.
+                        // each subarray is a pair of Cartesian coordinates, i.e. [x, y]
                     }
                 });
             }
                             
         };
-        
+        // d3.scaleLinear creates function (e.g. called xScale) that maps domain to range
+        // so that xScale(z) will yield the value from range corresponding to z
+        // so in essence it is 'normalization' utility
         this.xScale = d3.scaleLinear()
                         .domain([d3.min(allCordinatesArray, function(d) { return d[0]; }), d3.max(allCordinatesArray, function(d) { return d[0]; })])
                         .range([1, this.svgWidth - 1]);
@@ -191,6 +200,7 @@ class PdbTopologyViewerPlugin {
                         .domain([d3.min(allCordinatesArray, function(d) { return d[1]; }), d3.max(allCordinatesArray, function(d) { return d[1]; })])
                         .range([1, this.svgHeight - 1]);
         
+                        // apparently zoom behaviour
         this.zoom = d3.zoom()
                     .on("zoom", () => this.zoomDraw())
                     //.scaleExtent([.5, 20])  // This control how much you can unzoom (x0.5) and zoom (x20)
@@ -406,6 +416,7 @@ class PdbTopologyViewerPlugin {
         });
     }
 
+    // Draws subelements of helices (i.e. residues, that are highlighted on hover)
     drawHelicesSubpaths(startResidueNumber:number, stopResidueNumber:number, index:number, curveYdiff:number) {
         const _this = this;
         curveYdiff = 0;
@@ -414,9 +425,11 @@ class PdbTopologyViewerPlugin {
         if(this.scaledPointsArr[3] > this.scaledPointsArr[9]) curveYdiff2 = curveYdiff + diffVal;
         const totalAaInPath = (stopResidueNumber - startResidueNumber) + 1
         if(curveYdiff === 0) curveYdiff2 = 0;
+        // Calculates height (Y) of an individual subpath element (i.e. a residue)
         let subPathHeight = ((this.scaledPointsArr[9] - curveYdiff2) - this.scaledPointsArr[3])/totalAaInPath;
         let startPoint = 0;
         if(curveYdiff === 0){
+            // d3.node return first element in selection
             let boxHeight = (this.svgEle.select('.helices'+index).node().getBBox().height) + (subPathHeight/2);
             const singleUnitHt = boxHeight/totalAaInPath;
             //boxHeight = boxHeight - singleUnitHt; //height correction
@@ -738,6 +751,7 @@ class PdbTopologyViewerPlugin {
                                 curveYdiff = -2 * (secStrData.minoraxis * 1.3);
                             }
                             
+                            // 6 points to draw capsule
                             const newPathCords = [
                                 secStrData.path[0], secStrData.path[1],
                                 curveCenter, secStrData.path[1] - curveYdiff,
@@ -750,12 +764,18 @@ class PdbTopologyViewerPlugin {
                             secStrData.path = newPathCords;
                         }
                         
+                        // adds new properties to array obtained from PDBe topology API
                         secStrData.secStrType = secStrType;
                         secStrData.pathIndex = secStrDataIndex;
+                        // selectAll is d3 function that selects elements based on CSS-like query
                         const newEle = this.svgEle.selectAll('path.'+secStrType+''+secStrDataIndex)
+                        // d3.data binds array of data to previously selected elements
                         .data([secStrData])
+                        // dynamically creates missing elements (from selectAll) if number of data values and nodes is not matching
                         .enter()
+                        // appends them all to svgEle
                         .append('path')  
+                        // TODO (not important for now)
                         .attr('class', () => {
                             if(secStrData.start === -1 && secStrData.stop === -1 && secStrType !== 'terms'){
                                 return 'dashedEle topologyEle '+secStrType+' '+secStrType+''+secStrDataIndex+' topoEleRange_'+secStrData.start+'-'+secStrData.stop;
@@ -764,20 +784,31 @@ class PdbTopologyViewerPlugin {
                             }
                         })
                         .attr('d', (d: any) => {
+                            // SVG coordinate system starts with top left corner
+                            // Command "Move To"
                             let dVal = 'M';
                             const pathLenth = secStrData.path.length;
                             let xScaleFlag = true;
                             //if(secStrData.path[1] > secStrData.path[7]) maskDiff = 1;
                             for(let i=0; i<pathLenth; i++){
+                                // 6 points in case of helices, so 12 values, so we go from 0 to 11 (including)
+                                // Here it switches to Bezeir Curve
                                 if(secStrType === 'helices' && (i === 2 || i === 8)) dVal += ' Q'
                                 //if(secStrType === 'coils' && secStrData.path.length < 12 && i === 2) dVal += ' C'
                                 //if(secStrType === 'coils' && secStrData.path.length < 14 && secStrData.path.length > 12 && i === 4) dVal += ' C'
+                                
+                                // Here it switches to "Line To" after it is done with Bezeir Curve (on the top and bottom of helices)
                                 if((secStrType === 'helices' && i === 6) || (secStrType === 'coils' && secStrData.path.length < 12 && i === 8)) dVal += ' L'
+                                // On first iteration it does this
                                 if(xScaleFlag){
+                                    // Uses previously created scale function to 'normalize' the X coordinate
                                     const xScaleValue = this.xScale(secStrData.path[i]);
+                                    // Adds it right after "Move to"
                                     dVal += ' '+xScaleValue;
+                                    // And also gather them all in some array
                                     this.scaledPointsArr.push(xScaleValue);
                                 }else{
+                                    // on next iteration xScaleFlag is alredy false, so it deals with "Y scale" in a simlar way
                                     const yScaleValue = this.yScale(secStrData.path[i]);
                                     dVal += ' '+yScaleValue;
                                     this.scaledPointsArr.push(yScaleValue);
@@ -785,6 +816,7 @@ class PdbTopologyViewerPlugin {
                                 
                                 xScaleFlag = !xScaleFlag;
                             }
+                            // Switches to "Close Path", in case of strands and helices
                             if(secStrType === 'strands' || secStrType === 'helices') dVal += ' Z'
                             return dVal;
                         })
