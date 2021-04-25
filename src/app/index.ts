@@ -130,13 +130,28 @@ class PdbTopologyViewerPlugin {
     }
 
     async getApiData(pdbId: string, chainId: string) {
+        // const dataUrls = [
+        //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
+        //     `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
+        //     `https://www.ebi.ac.uk/pdbe/api/topology/entry/${pdbId}`,
+        //     `https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
+        //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
+        // ]
+
         const dataUrls = [
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
-            `https://www.ebi.ac.uk/pdbe/api/topology/entry/${pdbId}`,
+            // https://jsonstorage.net/api/items/280e51f7-6953-4979-bf8a-0b22970317c8 - distorted only helix
+            // https://jsonstorage.net/api/items/a6e44d75-5beb-4768-9cfa-d7124ddc5e9f - both helix and strand (wrong)
+            // https://jsonstorage.net/api/items/f05f7ac3-2880-42d1-8ce0-02f754bc6f54 - both helix and strand (correct, but placed not so well)
+            // https://jsonstorage.net/api/items/510463b5-d100-4a51-afaf-2d7d6145361d - both helix and strand (CORRECT!)
+            // https://jsonstorage.net/api/items/64b59c12-c0bf-44f9-aadd-78770e49abc8 - both 1 helix (CORRECT) and strand (CORRECT)
+            // https://jsonstorage.net/api/items/93ad97dc-e180-4a94-8433-5e71b48c189e - both 2 helix (CORRECT) and strand (CORRECT)
+            `https://cors-anywhere.herokuapp.com/https://jsonstorage.net/api/items/64b59c12-c0bf-44f9-aadd-78770e49abc8`,
             `https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         ]
+
         return Promise.all(dataUrls.map(url => fetch(url)))
         .then(resp => Promise.all( 
                 resp.map((r) => { 
@@ -430,6 +445,7 @@ class PdbTopologyViewerPlugin {
         let startPoint = 0;
         if(curveYdiff === 0){
             // d3.node return first element in selection
+            // SVGGraphicsElement.getBBox returns coordinates of rectangle in which SVG element fits
             let boxHeight = (this.svgEle.select('.helices'+index).node().getBBox().height) + (subPathHeight/2);
             const singleUnitHt = boxHeight/totalAaInPath;
             //boxHeight = boxHeight - singleUnitHt; //height correction
@@ -743,27 +759,50 @@ class PdbTopologyViewerPlugin {
                     }else{
                         let curveYdiff = 0
                         //modify helices path data to create a capsule like structure
-                        if(secStrType === 'helices'){
-                            const curveCenter = secStrData.path[0] + ((secStrData.path[2] - secStrData.path[0])/2);
+                        // if(secStrType === 'helices'){
+                        //     const curveCenter = secStrData.path[0] + ((secStrData.path[2] - secStrData.path[0])/2);
                                                                 
-                            curveYdiff = 2 * (secStrData.minoraxis * 1.3);
-                            if(secStrData.path[1] >  secStrData.path[3]){
-                                curveYdiff = -2 * (secStrData.minoraxis * 1.3);
-                            }
+                        //     curveYdiff = 2 * (secStrData.minoraxis * 1.3);
+                        //     if(secStrData.path[1] >  secStrData.path[3]){
+                        //         curveYdiff = -2 * (secStrData.minoraxis * 1.3);
+                        //     }
                             
-                            // 6 points to draw capsule
-                            const newPathCords = [
-                                secStrData.path[0], secStrData.path[1],
-                                curveCenter, secStrData.path[1] - curveYdiff,
-                                secStrData.path[2], secStrData.path[1],
-                                secStrData.path[2], secStrData.path[3],
-                                curveCenter, secStrData.path[3] + curveYdiff,
-                                secStrData.path[0], secStrData.path[3]
-                            ];
+                        //     // 6 points to draw capsule
+                        //     const newPathCords = [
+                        //         secStrData.path[0], secStrData.path[1],
+                        //         curveCenter, secStrData.path[1] - curveYdiff,
+                        //         secStrData.path[2], secStrData.path[1],
+                        //         secStrData.path[2], secStrData.path[3],
+                        //         curveCenter, secStrData.path[3] + curveYdiff,
+                        //         secStrData.path[0], secStrData.path[3]
+                        //     ];
                             
-                            secStrData.path = newPathCords;
-                        }
+                        //     secStrData.path = newPathCords;
+                        // }
                         
+                        // New version of helices coordinates modification to draw 'rotatable' capsule
+                        // if(secStrType === 'helices'){
+                        //     const curveCenter = secStrData.path[0] + ((secStrData.path[2] - secStrData.path[0])/2);
+                                                                
+                        //     curveYdiff = 2 * (secStrData.minoraxis * 1.3);
+                        //     if(secStrData.path[1] >  secStrData.path[3]){
+                        //         curveYdiff = -2 * (secStrData.minoraxis * 1.3);
+                        //     }
+                            
+                        //     // 6 points to draw capsule
+                        //     const newPathCords = [
+                        //         secStrData.path[0], secStrData.path[1],
+                        //         curveCenter, secStrData.path[1] - curveYdiff,
+                        //         secStrData.path[2], secStrData.path[1],
+                        //         secStrData.path[2], secStrData.path[3],
+                        //         curveCenter, secStrData.path[3] + curveYdiff,
+                        //         secStrData.path[0], secStrData.path[3]
+                        //     ];
+                            
+                        //     secStrData.path = newPathCords;
+                        // }
+
+
                         // adds new properties to array obtained from PDBe topology API
                         secStrData.secStrType = secStrType;
                         secStrData.pathIndex = secStrDataIndex;
