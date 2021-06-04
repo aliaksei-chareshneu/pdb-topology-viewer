@@ -147,7 +147,7 @@ class PdbTopologyViewerPlugin {
             // https://jsonstorage.net/api/items/510463b5-d100-4a51-afaf-2d7d6145361d - both helix and strand (CORRECT!)
             // https://jsonstorage.net/api/items/64b59c12-c0bf-44f9-aadd-78770e49abc8 - both 1 helix (CORRECT) and strand (CORRECT)
             // https://jsonstorage.net/api/items/93ad97dc-e180-4a94-8433-5e71b48c189e - both 2 helix (CORRECT) and strand (CORRECT)
-            `https://cors-anywhere.herokuapp.com/https://jsonstorage.net/api/items/64b59c12-c0bf-44f9-aadd-78770e49abc8`,
+            `https://cors-anywhere.herokuapp.com/https://jsonstorage.net/api/items/4d8d5d12-8492-47e2-89ea-4d9d8d30ccb1`,
             `https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         ]
@@ -223,9 +223,12 @@ class PdbTopologyViewerPlugin {
         
     }
 
+    // TODO: method needs to be modified: subPathHeight assumes that the SVG element is vertical, while in 2DProts it can oriented arbitrarily
+    // TODO: very important for any SSE is to be able to get its length to obtain the length of residue subelements
     drawStrandSubpaths(startResidueNumber:number, stopResidueNumber:number, index:number) {
         const _this = this;
         const totalAaInPath = (stopResidueNumber - startResidueNumber) + 1
+        // height of one subelement
         const subPathHeight = (this.scaledPointsArr[7] - this.scaledPointsArr[1])/totalAaInPath;
         
         //create subsections/paths
@@ -254,7 +257,12 @@ class PdbTopologyViewerPlugin {
         
         
         this.svgEle.selectAll('.subpath-strands'+index).remove();
-        
+        // What it does: (jonathansoma.com/tutorials//d3...)
+        // 1. selects all elements based on CSS selector
+        // 2. binds data array to them (dValArr)
+        // 3. enter() access all data points without an element
+        // 4. append() appends 'path' element for each
+        // so that you will have many smaller path elements, corresponding to residues, filling the bigger one
         this.svgEle.selectAll('.subpath-strands'+index)
         .data(dValArr)
         .enter()
@@ -758,6 +766,8 @@ class PdbTopologyViewerPlugin {
                         //Terms
                     }else{
                         let curveYdiff = 0
+                        // TODO: UNCOMMENT - IT IS USED, YOU COMMENTED IT TO DO MOCKUP FOR VIS II
+                        // or better rewrite this functionality - e.g. as a separate function (determine distance between any two points in 2D space)
                         //modify helices path data to create a capsule like structure
                         // if(secStrType === 'helices'){
                         //     const curveCenter = secStrData.path[0] + ((secStrData.path[2] - secStrData.path[0])/2);
@@ -837,6 +847,7 @@ class PdbTopologyViewerPlugin {
                                 //if(secStrType === 'coils' && secStrData.path.length < 14 && secStrData.path.length > 12 && i === 4) dVal += ' C'
                                 
                                 // Here it switches to "Line To" after it is done with Bezeir Curve (on the top and bottom of helices)
+                                // TODO: But what about coils?
                                 if((secStrType === 'helices' && i === 6) || (secStrType === 'coils' && secStrData.path.length < 12 && i === 8)) dVal += ' L'
                                 // On first iteration it does this
                                 if(xScaleFlag){
