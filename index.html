@@ -35,13 +35,23 @@
         const viewContainer = document.getElementById('pdb-topology-viewer');
 
         const options = {
-          entryId: '1cbs',
-          entityId: '1'
+          entryId: '3myt',
+          entityId: '1',
+		  chainId: 'D',
         } 
     
         //Call render method to display the 2D view
         pluginInstance.render(viewContainer, options);
-      
+		
+		// TESTING
+		const p = pluginInstance
+		one = p.chunkArray([1, 2, 3, 4, 5], 2)
+		two = p.chunkArray([1, 2, 3, 4, 5], 3)
+		
+		console.log(one)
+		console.log(two)
+		
+		// ENDOFTESTING
       });
       
     </script>
