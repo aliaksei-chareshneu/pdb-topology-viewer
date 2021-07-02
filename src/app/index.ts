@@ -1,3 +1,84 @@
+// TODO: Write better description
+// Function converts 2DProts JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
+function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
+	// TODO: try different for both if something goes wrong
+	const MINORAXIS = 4;
+	const CONVEXITY = 2;
+	
+	// Coordinates of upper right and lower left corners of "canvas"
+	const upperRight = {
+		'x': inputJson.metadata['upper_right'][0],
+		'y': inputJson.metadata['upper_right'][1]
+	};
+	
+	const lowerLeft = {
+		'x': inputJson.metadata['lower_left'][0],
+		'y': inputJson.metadata['lower_left'][1]
+	};
+	
+	// const outputJSON = {
+		// entryID: {
+			// TODO: check if it should be determined in some way (e.g. if chainID = A, entityID = 1, if B => 2, etc.)
+			// '1': {
+				// chainID: {
+					// 'helices': [],
+					// 'coils': [],
+					// 'strands': [],
+					// 'terms': [],
+					// 'extents': [],
+				// }
+			// }
+		// }
+	// };
+	
+	const outputJSON = {};
+	// TODO: check if entityId (i.e. '1') should be determined in some way (e.g. if chainID = A, entityID = 1, if B => 2, etc.)
+	outputJSON[entryID] = {'1': {}};
+	outputJSON[entryID]['1'][chainID] = {
+		'helices': [],
+		'coils': [],
+		'strands': [],
+		'terms': [],
+		'extents': [],
+	};
+	
+	// const helices = outputJSON.entryID['1'].chainID.helices;
+	
+	const inputSSEs = Object.entries(inputJson.sses);
+	const inputHelices = inputSSEs.filter(sse => sse[0].charAt(0) === 'H');
+	// console.log(inputHelices);
+	outputJSON[entryID]['1'][chainID].helices = inputHelices.map(helix => {
+		// console.log(helix);
+		const center = {
+			'x': helix[1].layout[0],
+			'y': helix[1].layout[1],
+		};
+		
+		return {
+			'start': Number(helix[1].residues[0]),
+			'stop': Number(helix[1].residues[1]),
+			'majoraxis': Number(helix[1].size),
+			'minoraxis': MINORAXIS,
+			// We can try 2 points here, and let the existing code of topology component convert it
+			// But better to let the code commented, and supply 6 points from the very beginning
+			'path': [
+				center.x + (MINORAXIS/2), center.y + (helix[1].size/2) - CONVEXITY,
+				center.x,				  center.y + (helix[1].size/2),
+				center.x - (MINORAXIS/2), center.y + (helix[1].size/2) - CONVEXITY,
+				center.x - (MINORAXIS/2), center.y - (helix[1].size/2) + CONVEXITY,
+				center.x,				  center.y - (helix[1].size/2),
+				center.x + (MINORAXIS/2), center.y - (helix[1].size/2) + CONVEXITY
+			],
+			'color': helix[1].color,
+			'2dprotsSSEId': helix[0],
+		}
+	});
+	
+	return outputJSON;
+	
+	// for (const [key, value] of inputHelices)
+}
+
 class PdbTopologyViewerPlugin { 
     
     defaultColours = {
@@ -51,6 +132,7 @@ class PdbTopologyViewerPlugin {
         this.entityId = options.entityId;
         this.entryId = options.entryId.toLowerCase();
         
+        // TODO: Investigate what it does to undertand what entityId to write to converted JSON (always 1, or 1 if chain A, 2 if B etc.)
         //If chain id is not provided then get best chain id from observed residues api
         if(typeof options.chainId == 'undefined' || options.chainId == null){
             this.getObservedResidues(this.entryId).then((result) => {
@@ -72,7 +154,8 @@ class PdbTopologyViewerPlugin {
     initPainting(){
         this.getApiData(this.entryId, this.chainId).then(result => {
             if(result){
-                
+                result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], this.entryId, this.chainId);
+				console.log(result[2])
                 //Validate required data in the API result set (0, 2, 4)
                 if(typeof result[0] == 'undefined' || typeof result[2] == 'undefined' || typeof result[4] == 'undefined'){ 
                     this.displayError();
@@ -147,8 +230,9 @@ class PdbTopologyViewerPlugin {
             // https://jsonstorage.net/api/items/510463b5-d100-4a51-afaf-2d7d6145361d - both helix and strand (CORRECT!)
             // https://jsonstorage.net/api/items/64b59c12-c0bf-44f9-aadd-78770e49abc8 - both 1 helix (CORRECT) and strand (CORRECT)
             // https://jsonstorage.net/api/items/93ad97dc-e180-4a94-8433-5e71b48c189e - both 2 helix (CORRECT) and strand (CORRECT)
-            `https://cors-anywhere.herokuapp.com/https://jsonstorage.net/api/items/4d8d5d12-8492-47e2-89ea-4d9d8d30ccb1`,
-            `https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
+            // Latest: `https://cors-anywhere.herokuapp.com/https://jsonstorage.net/api/items/4d8d5d12-8492-47e2-89ea-4d9d8d30ccb1`,
+            `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/67e956fe787f1a79d0b85325fce2680f94ddebb0/3myt_D00_data.json`,
+			`https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         ]
 
@@ -447,6 +531,7 @@ class PdbTopologyViewerPlugin {
         let curveYdiff2 = curveYdiff - diffVal;
         if(this.scaledPointsArr[3] > this.scaledPointsArr[9]) curveYdiff2 = curveYdiff + diffVal;
         const totalAaInPath = (stopResidueNumber - startResidueNumber) + 1
+        // Seems that this IF is always true => both are = 0
         if(curveYdiff === 0) curveYdiff2 = 0;
         // Calculates height (Y) of an individual subpath element (i.e. a residue)
         let subPathHeight = ((this.scaledPointsArr[9] - curveYdiff2) - this.scaledPointsArr[3])/totalAaInPath;
@@ -454,6 +539,7 @@ class PdbTopologyViewerPlugin {
         if(curveYdiff === 0){
             // d3.node return first element in selection
             // SVGGraphicsElement.getBBox returns coordinates of rectangle in which SVG element fits
+            // In this case it selects TopologyEle (outer helix not divided onto residues)
             let boxHeight = (this.svgEle.select('.helices'+index).node().getBBox().height) + (subPathHeight/2);
             const singleUnitHt = boxHeight/totalAaInPath;
             //boxHeight = boxHeight - singleUnitHt; //height correction
