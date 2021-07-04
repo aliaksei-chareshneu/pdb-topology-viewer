@@ -1,3 +1,4 @@
+// Composes a path array for helix
 function composePathHelix(center, MINORAXIS, sse, CONVEXITY) {
 	return [
 		center.x + (MINORAXIS/2), center.y + (sse[1].size/2) - CONVEXITY,
@@ -9,6 +10,7 @@ function composePathHelix(center, MINORAXIS, sse, CONVEXITY) {
 	]
 }
 
+// Composes a path array for strand
 function composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD) {
 	return [
 		center.x + (MINORAXIS/2), 				 center.y - (sse[1].size/2),
@@ -21,17 +23,29 @@ function composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD) {
 	]
 }
 
+// Converts a path array in Cartesian coordinates to Y-reversed coordinates used for drawing
+function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
+	const pathYReversed = pathCartesian.map((coord, index) => {
+		if (index % 2 === 0) {
+			return coord - lowerLeft.x;
+		} else {
+			return upperRight.y - coord;
+		}
+	});
+	return pathYReversed;
+}
+
 // TODO: Fix tsc errors
 // TODO: Check with Ivana to implement rotation properly
 // TODO: Check if residues from some of 5 used APIs correspond to what is in 2DProts
 // TODO: Write better function description
-// Function converts 2DProts JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
+// Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 	// TODO: try different for both if something goes wrong
-	const MINORAXIS = 4;
-	const CONVEXITY = 2;
-	const ARROW_SPREAD = 2;
-	const ARROW_HEIGHT = 2;
+	const MINORAXIS = 3/2;
+	const CONVEXITY = 2/2;
+	const ARROW_SPREAD = 1/2;
+	const ARROW_HEIGHT = 4/2;
 	
 	// Coordinates of upper right and lower left corners of "canvas"
 	const upperRight = {
@@ -57,63 +71,45 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 	
 	const inputSSEs = Object.entries(inputJson.sses);
 	
-	for (const see of inputSSEs) {
-		// SUBSTITUTE MAP BY LOOP
-	}
-
-
-// NOT HELICES! STRANDS :D
-	outputJSON[entryID]['1'][chainID].helices = inputSSEs.map(sse => {
+	for (const sse of inputSSEs) {
 		console.log(sse);
 		const center = {
 			'x': sse[1].layout[0],
 			'y': sse[1].layout[1],
 		};
 		
-		const sseType = sse[0].charAt(0);
-		let pathCartesian = [];
-		if (sseType === 'H') {
-			pathCartesian = composePathHelix(center, MINORAXIS, sse, CONVEXITY);
-		} else if (sseType == 'E' || '?') {
-			pathCartesian = composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD);
-		} else {
-			console.error('Unknown SSE type!');
-		}
-		
-		const pathYReversed = pathCartesian.map((coord, index) => {
-			if (index % 2 === 0) {
-				return coord - lowerLeft.x;
-			} else {
-				return upperRight.y - coord;
-			}
-		});
-		
 		const centerYReversed = {
 			'x': center.x - lowerLeft.x,
 			'y': upperRight.y - center.y
 		};
 		
-		console.log(pathYReversed);
-		console.log(centerYReversed);
-		
-		return {
+		const topologyData = {
 			'start': Number(sse[1].residues[0]),
 			'stop': Number(sse[1].residues[1]),
 			'majoraxis': Number(sse[1].size),
 			'minoraxis': MINORAXIS,
-			// We can try 2 points here, and let the existing code of topology component convert it
-			// But better to left the code commented, and supply 6 points from the very beginning
-			'path': pathYReversed,
 			'center': centerYReversed,
 			'color': sse[1].color,
 			'angle': sse[1].angles,
 			'2dprotsSSEId': sse[0],
+			'path': undefined,
+		};
+		
+		const sseType = sse[0].charAt(0);
+		if (sseType === 'H') {
+			const pathCartesian = composePathHelix(center, MINORAXIS, sse, CONVEXITY);
+			topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
+			outputJSON[entryID]['1'][chainID].helices.push(topologyData);
+		} else if (sseType == 'E' || '?') {
+			const pathCartesian = composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD);
+			topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
+			outputJSON[entryID]['1'][chainID].strands.push(topologyData);
+		} else {
+			console.error('Unknown SSE type!');
 		}
-	});
-	
+	}
+
 	return outputJSON;
-	
-	// for (const [key, value] of inputHelices)
 }
 
 class PdbTopologyViewerPlugin { 
@@ -876,8 +872,10 @@ class PdbTopologyViewerPlugin {
        
         this.getDomainRange();
         this.scaledPointsArr = [];
-        this.svgEle.call(this.zoom).on("contextmenu", function (d:any, i:number) { d3.event.preventDefault(); }); //add zoom event and block right click event
-        const topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
+        // this.svgEle.call(this.zoom).on("contextmenu", function (d:any, i:number) { d3.event.preventDefault(); }); //add zoom event and block right click event
+        // No zoom for now
+		this.svgEle.on("contextmenu", function (d:any, i:number) { d3.event.preventDefault(); }); //add zoom event and block right click event
+		const topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
         for(let secStrType in topologyData){
         // angular.forEach(this.apiResult.data[_this.entryId].topology[scope.entityId][scope.bestChainId], function(secStrArr, secStrType) {
             const secStrArr =  topologyData[secStrType];
@@ -1000,7 +998,11 @@ class PdbTopologyViewerPlugin {
                         if(secStrData.start === -1 && secStrData.stop === -1){
                             newEle.attr('stroke-dasharray', '0.9')
                         }
-                    
+						
+						// Center of current SSE
+						const xCenterScaled = this.xScale(secStrData.center.x);
+						const yCenterScaled = this.yScale(secStrData.center.y);
+						
                         //hightlight node calculations
                         if(secStrType === 'strands'){
                             //create subsections/paths
@@ -1011,7 +1013,11 @@ class PdbTopologyViewerPlugin {
                             
                             //bring original/complete helices in front newEle
                             // this.svgEle.append(newEle.node());		
-                            this.svgEle._groups[0][0].append(newEle.node());						
+                            this.svgEle._groups[0][0].append(newEle.node());
+
+							const allElementsBelongingToStrand = d3.selectAll(`.strands${secStrDataIndex}, .maskpath-strands${secStrDataIndex}, .subpath-strands${secStrDataIndex}`)
+								.attr('transform', `rotate(${secStrData.angle}, ${xCenterScaled}, ${yCenterScaled})`);
+							console.log(allElementsBelongingToStrand);
                         }
                         
                         //for helices
@@ -1026,11 +1032,10 @@ class PdbTopologyViewerPlugin {
                             // angular.element(element[0].querySelector('.topoSvg')).append(newEle.node());
                             this.svgEle._groups[0][0].append(newEle.node());
 							
-							// const xCenterScaled = this.xScale(secStrData.center.x);
-							// const yCenterScaled = this.yScale(secStrData.center.y);
-							// const allElementsBelongingToHelix = d3.selectAll(`.helices${secStrDataIndex}, .maskpath-helices${secStrDataIndex}, .subpath-helices${secStrDataIndex}`)
-								// .attr('transform', `rotate(${secStrData.angle}, ${xCenterScaled}, ${yCenterScaled})`);
-							// console.log(allElementsBelongingToHelix);
+							
+							const allElementsBelongingToHelix = d3.selectAll(`.helices${secStrDataIndex}, .maskpath-helices${secStrDataIndex}, .subpath-helices${secStrDataIndex}`)
+								.attr('transform', `rotate(${secStrData.angle}, ${xCenterScaled}, ${yCenterScaled})`);
+							console.log(allElementsBelongingToHelix);
                         }
                     
                         //for coils
