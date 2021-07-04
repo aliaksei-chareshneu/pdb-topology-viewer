@@ -1,14 +1,37 @@
-// TODO: Convert cartesian to Y-reversed coordinates
+function composePathHelix(center, MINORAXIS, sse, CONVEXITY) {
+	return [
+		center.x + (MINORAXIS/2), center.y + (sse[1].size/2) - CONVEXITY,
+		center.x,				  center.y + (sse[1].size/2),
+		center.x - (MINORAXIS/2), center.y + (sse[1].size/2) - CONVEXITY,
+		center.x - (MINORAXIS/2), center.y - (sse[1].size/2) + CONVEXITY,
+		center.x,				  center.y - (sse[1].size/2),
+		center.x + (MINORAXIS/2), center.y - (sse[1].size/2) + CONVEXITY
+	]
+}
+
+function composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD) {
+	return [
+		center.x + (MINORAXIS/2), 				 center.y - (sse[1].size/2),
+		center.x + (MINORAXIS/2), 				 center.y + (sse[1].size/2) - ARROW_HEIGHT,
+		center.x + (MINORAXIS/2) + ARROW_SPREAD, center.y + (sse[1].size/2) - ARROW_HEIGHT,
+		center.x,								 center.y + (sse[1].size/2),
+		center.x - (MINORAXIS/2) - ARROW_SPREAD, center.y + (sse[1].size/2) - ARROW_HEIGHT,
+		center.x - (MINORAXIS/2),				 center.y + (sse[1].size/2) - ARROW_HEIGHT,
+		center.x - (MINORAXIS/2),				 center.y - (sse[1].size/2)
+	]
+}
+
 // TODO: Fix tsc errors
-// TODO: Copy updated function to index.ts and continue development of this function in index.ts
-// TODO: Implement rotation
+// TODO: Check with Ivana to implement rotation properly
 // TODO: Check if residues from some of 5 used APIs correspond to what is in 2DProts
-// TODO: Write better description
+// TODO: Write better function description
 // Function converts 2DProts JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 	// TODO: try different for both if something goes wrong
 	const MINORAXIS = 4;
 	const CONVEXITY = 2;
+	const ARROW_SPREAD = 2;
+	const ARROW_HEIGHT = 2;
 	
 	// Coordinates of upper right and lower left corners of "canvas"
 	const upperRight = {
@@ -20,22 +43,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		'x': inputJson.metadata['lower_left'][0],
 		'y': inputJson.metadata['lower_left'][1]
 	};
-	
-	// const outputJSON = {
-		// entryID: {
-			// TODO: check if it should be determined in some way (e.g. if chainID = A, entityID = 1, if B => 2, etc.)
-			// '1': {
-				// chainID: {
-					// 'helices': [],
-					// 'coils': [],
-					// 'strands': [],
-					// 'terms': [],
-					// 'extents': [],
-				// }
-			// }
-		// }
-	// };
-	
+		
 	const outputJSON = {};
 	// TODO: check if entityId (i.e. '1') should be determined in some way (e.g. if chainID = A, entityID = 1, if B => 2, etc.)
 	outputJSON[entryID] = {'1': {}};
@@ -47,26 +55,30 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		'extents': [],
 	};
 	
-	// const helices = outputJSON.entryID['1'].chainID.helices;
-	
 	const inputSSEs = Object.entries(inputJson.sses);
-	const inputHelices = inputSSEs.filter(sse => sse[0].charAt(0) === 'H');
-	// console.log(inputHelices);
-	outputJSON[entryID]['1'][chainID].helices = inputHelices.map(helix => {
-		console.log(helix);
+	
+	for (const see of inputSSEs) {
+		// SUBSTITUTE MAP BY LOOP
+	}
+
+
+// NOT HELICES! STRANDS :D
+	outputJSON[entryID]['1'][chainID].helices = inputSSEs.map(sse => {
+		console.log(sse);
 		const center = {
-			'x': helix[1].layout[0],
-			'y': helix[1].layout[1],
+			'x': sse[1].layout[0],
+			'y': sse[1].layout[1],
 		};
 		
-		const pathCartesian = [
-			center.x + (MINORAXIS/2), center.y + (helix[1].size/2) - CONVEXITY,
-			center.x,				  center.y + (helix[1].size/2),
-			center.x - (MINORAXIS/2), center.y + (helix[1].size/2) - CONVEXITY,
-			center.x - (MINORAXIS/2), center.y - (helix[1].size/2) + CONVEXITY,
-			center.x,				  center.y - (helix[1].size/2),
-			center.x + (MINORAXIS/2), center.y - (helix[1].size/2) + CONVEXITY
-		];
+		const sseType = sse[0].charAt(0);
+		let pathCartesian = [];
+		if (sseType === 'H') {
+			pathCartesian = composePathHelix(center, MINORAXIS, sse, CONVEXITY);
+		} else if (sseType == 'E' || '?') {
+			pathCartesian = composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD);
+		} else {
+			console.error('Unknown SSE type!');
+		}
 		
 		const pathYReversed = pathCartesian.map((coord, index) => {
 			if (index % 2 === 0) {
@@ -85,17 +97,17 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		console.log(centerYReversed);
 		
 		return {
-			'start': Number(helix[1].residues[0]),
-			'stop': Number(helix[1].residues[1]),
-			'majoraxis': Number(helix[1].size),
+			'start': Number(sse[1].residues[0]),
+			'stop': Number(sse[1].residues[1]),
+			'majoraxis': Number(sse[1].size),
 			'minoraxis': MINORAXIS,
 			// We can try 2 points here, and let the existing code of topology component convert it
-			// But better to let the code commented, and supply 6 points from the very beginning
+			// But better to left the code commented, and supply 6 points from the very beginning
 			'path': pathYReversed,
 			'center': centerYReversed,
-			'color': helix[1].color,
-			'angle': helix[1].angles,
-			'2dprotsSSEId': helix[0],
+			'color': sse[1].color,
+			'angle': sse[1].angles,
+			'2dprotsSSEId': sse[0],
 		}
 	});
 	
@@ -1014,11 +1026,11 @@ class PdbTopologyViewerPlugin {
                             // angular.element(element[0].querySelector('.topoSvg')).append(newEle.node());
                             this.svgEle._groups[0][0].append(newEle.node());
 							
-							const xCenterScaled = this.xScale(secStrData.center.x);
-							const yCenterScaled = this.yScale(secStrData.center.y);
-							const allElementsBelongingToHelix = d3.selectAll(`.helices${secStrDataIndex}, .maskpath-helices${secStrDataIndex}, .subpath-helices${secStrDataIndex}`)
-								.attr('transform', `rotate(${secStrData.angle}, ${xCenterScaled}, ${yCenterScaled})`);
-							console.log(allElementsBelongingToHelix);
+							// const xCenterScaled = this.xScale(secStrData.center.x);
+							// const yCenterScaled = this.yScale(secStrData.center.y);
+							// const allElementsBelongingToHelix = d3.selectAll(`.helices${secStrDataIndex}, .maskpath-helices${secStrDataIndex}, .subpath-helices${secStrDataIndex}`)
+								// .attr('transform', `rotate(${secStrData.angle}, ${xCenterScaled}, ${yCenterScaled})`);
+							// console.log(allElementsBelongingToHelix);
                         }
                     
                         //for coils
