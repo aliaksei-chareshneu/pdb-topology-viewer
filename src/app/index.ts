@@ -1055,7 +1055,21 @@ class PdbTopologyViewerPlugin {
             });
             
         };
-        
+        				
+		// Upon user hover on Topology Component residue, highlight that residue in MolStar view 
+        d3.selectAll('path.helicesSubPath, path.strandsSubPath, path.coilsSubPath').on('mouseover', (event) => {
+			// console.log(this); //Element itself
+			// console.log(event); //event with element index, residue_number, path, type (e.g. strand)
+			console.log(event);
+			const data = {
+				'residue_number': event.residue_number,
+				'entityId': this.entityId,
+				'chainId': this.chainId,
+			};
+			const PDBTopologyComponentMouseoverEvent = new CustomEvent('PDB.topologyComponent.mouseover', {'detail': data});
+			document.dispatchEvent(PDBTopologyComponentMouseoverEvent);
+		});
+				
         //bring rsrz validation circles in front
         this.svgEle._groups[0][0].append(this.svgEle.selectAll('.validationResidue').node());
     };
