@@ -2,29 +2,48 @@
 <html>
 
   <head>
-
+	<!-- Molstar CSS & JS -->
+    <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-1.1.0.css">
+    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-1.1.0.js"></script>
+	
     <!-- d3.js dependency script -->
     <script src="https://cdn.jsdelivr.net/npm/d3@5.9.2"></script>
     
     <!-- PDB Topology Viewer JS -->
     <script type="text/javascript" src="build/pdb-topology-viewer-plugin-2.0.0.js" defer></script>
-
+	
     <style>
+		.flex-container {
+			display: flex;
+		}
+		
         #pdb-topology-viewer {
             position: relative;
             width: 500px;
             height: 500px;
+			margin-left: 50px;
         }
+		
+		#myViewer{
+			height: 500px;
+			margin-left: 50px;
+			width: 500px;
+			position: relative;
+		}
     </style>
 
   </head>
 
   <body>
-    <h4>PDB Topology Viewer Plugin Demo</h4>
+    <h4>Demo (2D and 3D)</h4>
     
     <!-- PDB Topology Viewer container -->
-    <div id="pdb-topology-viewer"></div>
-    
+	<div class="flex-container">
+		<div id="pdb-topology-viewer"></div>
+		<div id="myViewer"></div>
+	</div>
+	
+	<!-- PDB Topology component script -->
     <script>
       document.addEventListener('DOMContentLoaded', () => {
 
@@ -44,15 +63,34 @@
         pluginInstance.render(viewContainer, options);
 		
 		// TESTING
-		const p = pluginInstance
-		one = p.chunkArray([1, 2, 3, 4, 5], 2)
-		two = p.chunkArray([1, 2, 3, 4, 5], 3)
+		<!-- const p = pluginInstance -->
+		<!-- one = p.chunkArray([1, 2, 3, 4, 5], 2) -->
+		<!-- two = p.chunkArray([1, 2, 3, 4, 5], 3) -->
 		
-		console.log(one)
-		console.log(two)
+		<!-- console.log(two) -->
+		<!-- console.log(one) -->
 		
 		// ENDOFTESTING
       });
+      
+    </script>
+	
+	<!-- PDB Mol* component script -->
+	<script>
+      //Create plugin instance
+      var viewerInstance = new PDBeMolstarPlugin();
+  
+      //Set options (Checkout available options list in the documentation)
+      var options = {
+        moleculeId: '3myt',
+        hideControls: true
+      }
+      
+      //Get element from HTML/Template to place the viewer 
+      var viewerContainer = document.getElementById('myViewer');
+  
+      //Call render method to display the 3D view
+      viewerInstance.render(viewerContainer, options);
       
     </script>
   </body>
