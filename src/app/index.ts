@@ -42,10 +42,10 @@ function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
 // Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 	// TODO: try different for both if something goes wrong
-	const MINORAXIS = 3/2;
-	const CONVEXITY = 2/2;
-	const ARROW_SPREAD = 1/2;
-	const ARROW_HEIGHT = 4/2;
+	const MINORAXIS = 3 * 2;
+	const CONVEXITY = 2;
+	const ARROW_SPREAD = 1 * 2;
+	const ARROW_HEIGHT = 4;
 	
 	// Coordinates of upper right and lower left corners of "canvas"
 	const upperRight = {
@@ -57,6 +57,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		'x': inputJson.metadata['lower_left'][0],
 		'y': inputJson.metadata['lower_left'][1]
 	};
+	
+	console.log(upperRight, lowerLeft);
 		
 	const outputJSON = {};
 	// TODO: check if entityId (i.e. '1') should be determined in some way (e.g. if chainID = A, entityID = 1, if B => 2, etc.)
@@ -73,9 +75,11 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 	
 	for (const sse of inputSSEs) {
 		console.log(sse);
+		
+		// TEMPORARY: trying to guess the right multiplicator for coordinates (SSEs are too densly packed, though angles seem ok)
 		const center = {
-			'x': sse[1].layout[0],
-			'y': sse[1].layout[1],
+			'x': sse[1].layout[0] * 6.5,
+			'y': sse[1].layout[1] * 5.0,
 		};
 		
 		const centerYReversed = {
