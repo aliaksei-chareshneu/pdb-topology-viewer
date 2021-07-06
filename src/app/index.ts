@@ -1,3 +1,29 @@
+// Applies rotation matrix to a point (used to calculate path for coils)
+function applyRotationMatrix(point, center, angle) {
+	const angleCCW = 360 - angle;
+	const rotationMatrix = math.matrix([
+		[math.cos(math.unit(angle, 'degrees')), -math.sin(math.unit(angle, 'degrees'))],
+		[math.sin(math.unit(angle, 'degrees')), math.cos(math.unit(angle, 'degrees'))]
+	]);
+	
+	// Point translated to origin (0,0) , as the rotation matrix above is used for rotation around the center
+	const vector = math.matrix([
+		[point.x - center.x],
+		[point.y - center.y]
+	]);
+	
+	// Rotation matrix multiplied by column vector representing coordinates of a point
+	const rotatedPoint = math.multiply(rotationMatrix, vector);
+	
+	// We need to translate back from the origin
+	const translatedBackPoint = {
+		'x': rotatedPoint._data[0][0] + center.x,
+		'y': rotatedPoint._data[1][0] + center.y,
+	};
+	
+	return translatedBackPoint;
+}
+
 // Composes a path array for helix
 function composePathHelix(center, MINORAXIS, sse, CONVEXITY) {
 	return [
@@ -99,22 +125,69 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 			'angle': sse[1].angles,
 			'2dprotsSSEId': sse[0],
 			'path': undefined,
+			// data for drawing coils between helices and/or strands
+			'startCoord': {'x': undefined, 'y': undefined},
+			'stopCoord': {'x': undefined, 'y': undefined},
 		};
 		
 		const sseType = sse[0].charAt(0);
 		if (sseType === 'H') {
 			const pathCartesian = composePathHelix(center, MINORAXIS, sse, CONVEXITY);
 			topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
+			topologyData.stopCoord.x = topologyData.path[2];
+			topologyData.stopCoord.y = topologyData.path[3];
+			topologyData.startCoord.x = topologyData.path[8];
+			topologyData.startCoord.y = topologyData.path[9];
 			outputJSON[entryID]['1'][chainID].helices.push(topologyData);
 		} else if (sseType == 'E' || '?') {
 			const pathCartesian = composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD);
 			topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
+			topologyData.startCoord.x = topologyData.center.x;
+			topologyData.startCoord.y = topologyData.center.y + topologyData.majoraxis/2;
+			topologyData.stopCoord.x = topologyData.path[6];
+			topologyData.stopCoord.y = topologyData.path[7];
 			outputJSON[entryID]['1'][chainID].strands.push(topologyData);
 		} else {
 			console.error('Unknown SSE type!');
 		}
 	}
-
+	// separate array for calculating coils data
+	const helicesAndSheets = [...outputJSON[entryID]['1'][chainID].helices, ...outputJSON[entryID]['1'][chainID].strands];
+	helicesAndSheets.sort((a, b) => a.stop < b.start ? -1 : 1);
+	console.log(`Sorted helicesAndSheets array`);
+	console.log(helicesAndSheets);
+	
+	for (let i = 1; i < helicesAndSheets.length; i++) {
+		const sseBefore = helicesAndSheets[i - 1];
+		const sseAfter = helicesAndSheets[i];
+		if (sseBefore.stop + 1 === sseAfter.start) {
+			continue;
+		}
+		const coilTopologyData = {
+			'start': sseBefore.stop + 1,
+			'stop': sseAfter.start - 1,
+			'path': undefined,
+			// TODO: figure out how to determine the color
+			'color': undefined,
+		};
+		
+		const coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
+		console.log(coilStartPoint);
+		const coilStopPoint = applyRotationMatrix(sseAfter.stopCoord, sseAfter.center, sseAfter.angle);
+		console.log(coilStopPoint);
+		
+		// Calculate path based on data from the two SSEs (the one before and the one after this coil)
+		// TODO: apply corresponding rotation matrices to each point
+		coilTopologyData.path = [
+			coilStartPoint.x,
+			coilStartPoint.y,
+			coilStopPoint.x,
+			coilStopPoint.y,
+		];
+		
+		outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
+	}
+	
 	return outputJSON;
 }
 
@@ -799,44 +872,45 @@ class PdbTopologyViewerPlugin {
         
         const termsData = this.apiData[2][this.entryId][this.entityId][this.chainId].terms;
         const totalCoilsInStr = this.apiData[2][this.entryId][this.entityId][this.chainId].coils.length;
-        if(index === 0){
-            this.svgEle.selectAll('.terminal_N').remove();
-            this.svgEle.selectAll('.terminal_N')
-                    .data([termsData[0]])
-                    .enter()
-                    .append('text')
-                    .attr('class', 'terminals terminal_N')
-                    .attr('text-anchor','middle')
-                    .text('N')
-                    .attr('x', subPathCordsArr[0]['pathData'][0])
-                    .attr('y', subPathCordsArr[0]['pathData'][1])
-                    .attr('stroke','#0000ff')
-                    .attr('stroke-width','0.3')
-                    // .attr('font-size', 3 * this.zoom.scale() +'px')
-                    .attr('font-size', '3px')
-                    .attr('style',"-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;")
-        }else if(index === totalCoilsInStr - 1){
-            const pathDataLen = subPathCordsArr[totalAaInPath - 1]['pathData'].length;
-            let adjustmentFactor = -2;
-            if(subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 1] > subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 3]){
-                adjustmentFactor = 2;
-            }
-            this.svgEle.selectAll('.terminal_C').remove();
-            this.svgEle.selectAll('.terminal_C')
-                    .data([termsData[1]])
-                    .enter()
-                    .append('text')
-                    .attr('class', 'terminals terminal_N')
-                    .attr('text-anchor','middle')
-                    .text('C')
-                    .attr('x', subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 2])
-                    .attr('y', subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 1] + adjustmentFactor)
-                    .attr('stroke','#ff0000')
-                    .attr('stroke-width','0.3')
-                    // .attr('font-size', 3 * this.zoom.scale() +'px')
-                    .attr('font-size', '3px')
-                    .attr('style',"-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;")
-        }
+		// For now, N and C letters at the N and C ends of protein are turned off (there is some error occuring)
+        // if(index === 0){
+            // this.svgEle.selectAll('.terminal_N').remove();
+            // this.svgEle.selectAll('.terminal_N')
+                    // .data([termsData[0]])
+                    // .enter()
+                    // .append('text')
+                    // .attr('class', 'terminals terminal_N')
+                    // .attr('text-anchor','middle')
+                    // .text('N')
+                    // .attr('x', subPathCordsArr[0]['pathData'][0])
+                    // .attr('y', subPathCordsArr[0]['pathData'][1])
+                    // .attr('stroke','#0000ff')
+                    // .attr('stroke-width','0.3')
+                    // // .attr('font-size', 3 * this.zoom.scale() +'px')
+                    // .attr('font-size', '3px')
+                    // .attr('style',"-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;")
+        // }else if(index === totalCoilsInStr - 1){
+            // const pathDataLen = subPathCordsArr[totalAaInPath - 1]['pathData'].length;
+            // let adjustmentFactor = -2;
+            // if(subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 1] > subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 3]){
+                // adjustmentFactor = 2;
+            // }
+            // this.svgEle.selectAll('.terminal_C').remove();
+            // this.svgEle.selectAll('.terminal_C')
+                    // .data([termsData[1]])
+                    // .enter()
+                    // .append('text')
+                    // .attr('class', 'terminals terminal_N')
+                    // .attr('text-anchor','middle')
+                    // .text('C')
+                    // .attr('x', subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 2])
+                    // .attr('y', subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 1] + adjustmentFactor)
+                    // .attr('stroke','#ff0000')
+                    // .attr('stroke-width','0.3')
+                    // // .attr('font-size', 3 * this.zoom.scale() +'px')
+                    // .attr('font-size', '3px')
+                    // .attr('style',"-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;")
+        // }
         
     }
 
@@ -1005,12 +1079,11 @@ class PdbTopologyViewerPlugin {
                             newEle.attr('stroke-dasharray', '0.9')
                         }
 						
-						// Center of current SSE
-						const xCenterScaled = this.xScale(secStrData.center.x);
-						const yCenterScaled = this.yScale(secStrData.center.y);
-						
                         //hightlight node calculations
                         if(secStrType === 'strands'){
+							const xCenterScaled = this.xScale(secStrData.center.x);
+							const yCenterScaled = this.yScale(secStrData.center.y);
+							
                             //create subsections/paths
                             this.drawStrandSubpaths(secStrData.start, secStrData.stop, secStrDataIndex)
                             
@@ -1028,6 +1101,9 @@ class PdbTopologyViewerPlugin {
                         
                         //for helices
                         if(secStrType === 'helices'){
+							const xCenterScaled = this.xScale(secStrData.center.x);
+							const yCenterScaled = this.yScale(secStrData.center.y);
+							
                             //create subsections/paths
                             this.drawHelicesSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, curveYdiff)
                             
