@@ -80,6 +80,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		const center = {
 			'x': sse[1].layout[0] * 6.5,
 			'y': sse[1].layout[1] * 5.0,
+			// 'x': sse[1].layout[0],
+			// 'y': sse[1].layout[1],
 		};
 		
 		const centerYReversed = {
@@ -1243,6 +1245,7 @@ class PdbTopologyViewerPlugin {
                         }
                     })
                     .attr('d', residueEle.attr('d'))
+					.attr('transform', residueEle.attr('transform'))
                     .attr('fill', fill)
                     .attr('fill-opacity', 0.5)
                     .attr('stroke', stroke)
