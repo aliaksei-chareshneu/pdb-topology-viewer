@@ -82,8 +82,8 @@
 
 		//Set options (Checkout available options list in the documentation)
 		var options = {
-		moleculeId: '3myt',
-		hideControls: true
+			moleculeId: '3myt',
+			hideControls: true
 		}
 
 		//Get element from HTML/Template to place the viewer 
@@ -91,15 +91,24 @@
 
 		//Call render method to display the 3D view
 		viewerInstance.render(viewerContainer, options);
-
+		
+		const targetChainSelection = [{
+			struct_asym_id: 'D', 
+			color:{r:255,g:255,b:255},
+			focus: true,
+		}];
+		
+		viewerInstance.events.loadComplete.subscribe(() => {
+			viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}});
+		});
+		
 		// Upon user hover on Topology Component residue, highlight that residue in MolStar view
 		document.addEventListener('PDB.topologyComponent.mouseover', (event) => {
 			viewerInstance.visual.highlight({ data: [{
 				entity_id: event.detail['entityId'],
 				struct_asym_id: event.detail['chainId'],
 				residue_number: event.detail['residue_number'],
-				color: {r:255,g:0,b:0},
-			}] });
+			}], color: {r:255,g:0,b:0},});
 		});
 		
 		document.addEventListener('PDB.topologyComponent.click', (event) => {
