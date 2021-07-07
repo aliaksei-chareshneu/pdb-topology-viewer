@@ -712,7 +712,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             for (var subPathIndex = 0; subPathIndex < totalAaInPath; subPathIndex++) {
                 subPathObj = { type: 'helices' };
                 if (subPathIndex === 0) {
-                    if (this.scaledPointsArr[3] > this.scaledPointsArr[9]) {
+                    if (this.scaledPointsArr[3] < this.scaledPointsArr[9]) {
                         subPathObj['residue_number'] = stopResidueNumber;
                     }
                     else {
@@ -726,7 +726,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                     ];
                 }
                 else {
-                    if (this.scaledPointsArr[3] > this.scaledPointsArr[9]) {
+                    if (this.scaledPointsArr[3] < this.scaledPointsArr[9]) {
                         subPathObj['residue_number'] = stopResidueNumber - subPathIndex;
                     }
                     else {
@@ -1080,8 +1080,9 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             return dVal;
                         })
                             .attr('fill', 'none')
-                            .attr('stroke-width', 0.3)
-                            .attr('stroke', _this_1.defaultColours.borderColor);
+                            .attr('stroke-width', 0.6)
+                            // .attr('stroke', this.defaultColours.borderColor)
+                            .attr('stroke', secStrData.color);
                         if (secStrData.start === -1 && secStrData.stop === -1) {
                             newEle.attr('stroke-dasharray', '0.9');
                         }
