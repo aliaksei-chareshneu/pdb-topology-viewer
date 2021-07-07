@@ -42,6 +42,9 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
             r[k] = a[j];
     return r;
 };
+// TODO: coils path seem to need to consist from the number of point corresponding to number of residues. Check with original TOpology component on web
+// TODO: drawing of helices and strands can be done via rotation matrix as well. Maybe it can help to solve precision location issues (coils vs everything else)
+// TODO: residue numbering in subpath of some helices seem to be wrong. Angle problems? +/-
 // Applies rotation matrix to a point (used to calculate path for coils)
 function applyRotationMatrix(point, center, angle) {
     var angleCCW = 360 - angle;
@@ -209,7 +212,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
             coilStopPoint.x,
             coilStopPoint.y,
         ];
-        outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
+        // Coils are disabled for now - need to fix their positioning and residue content
+        // outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
     }
     return outputJSON;
 }

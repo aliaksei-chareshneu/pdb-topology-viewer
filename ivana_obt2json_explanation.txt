@@ -1,0 +1,86 @@
+Hello,
+the attached file is an example of output which can give you wanted data.
+metadata are the coordinates of upper right and lower left corners of the picture
+
+Координаты SVG/canvas?
+
+
+sses data are per sse, there is
+* sse size - size
+
+SIZE = length? 
+
+* its color
+* layout are coordinates of the sses center x,y
+
+Maybe we could use center to calc whatever is needed?
+
+* angel is its angle in given coordinates
+What is the default positionining of SSEs (i.e. before applying the angle)? Are they positioned parallel to the horizontal axis? Also, where the "arrow heads" of strands point to - to the right or to the left?
+Does positive value of angle imply clock wise rotation around the center of the SSE (and negative value - counter clock wise rotation)?
+
+
+* and residues mark the start and end residue of the sse
+the minor axes have the same size for all sses - I have to look to the precise number
+here.
+
+Is this ok for you - I think all data you wanted can be computed from this file.
+But if there is a problem, please write me.
+Ivana
+
+Dear Ivana,
+
+Thank you for your providing the sample file and explanation.
+If possible, I would like to clarify several more things related to the interpretation of the data in the file:
+ - Could you tell me which 2Dprots entry this JSON corresponds to? Just for better orientation.
+ - What is meant by size? Is it length of SSE (majoraxis?) or something else?
+ - What is the default positionining of SSEs (i.e. before applying the angle)? Are they positioned parallel to the horizontal axis? Also, where the "arrowheads" of strands point to - to the right or to the left?
+ - Does positive value of angle imply a clockwise rotation around the center of the SSE (and negative value - counterclockwise rotation)?
+
+Also, as a side note: I am not sufficiently familiar with the conceptual background of 2DProts, but if my guess that size = length of SSE is correct, it seems a bit unusual that SSEs with the same number of residues have different value of size.
+
+Best wishes,
+Aliaksei
+
+
+
+Hello,
+
+I'm attaching new data file (with the full pdc name and its picture),
+the size is the major axis in your diagram,
+and the angle is 0 if it is parallel to the coord y - the arrow is on the top. You can
+see the picture - The yellow sse is H5, the big blue sse is E23 - you can find the sse
+names based on the order (they are connected thus it is the order in the picture, in json
+file you have to order its names (there are numbers in names, or you can compare the size
+of the sses).
+
+The size is size in reality - the distance from the first residuum to the end one in
+angstrems. Eg. helices and strands have different sizes even if they have the same number
+of residues. The SSE could be curved as well.
+
+Is this ok? If there is any problem just ask the auestion
+Ivana
+
+
+3myt_D00
+
+
+Dear Ivana,
+
+Thank you for the clarification and new data.
+
+I would like to ask you if I got it right that the positive value of angle means clockwise rotation around the center of the SSE (and negative value - counterclockwise rotation)?
+Also, coils that are connecting helices/strands seem to be positioned in a bit unusual way (see the attached screenshot). Maybe it has some meaning, but was not able to get it unfortunately. Should the original positioning of coils be preserved or I can locate them in accordance with residue numbering (e.g. blue dashed line on the screenshot)?
+
+Other comments/questions:
+ - I think that there is a mistake in "?E?628818" key. Also, in this key's value, the color is given in non-HEX format. For now (development), it's totally fine, I mention it just in case there is some typo in algorithms you use.
+ - It seems that the SVG you send is rotated compared to the cooresponding 2DProts entry available online (https://2dprots.ncbr.muni.cz/domain/3mytD00). For early development it's okay. However, fixing it might be more complicated on later stages, so could you confirm that this is the correct orientation/topology?
+
+Thank you for your time,
+Best wishes,
+Aliaksei
+
+
+
+
+
