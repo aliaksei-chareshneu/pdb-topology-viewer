@@ -35,12 +35,190 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArrays = (this && this.__spreadArrays) || function () {
+    for (var s = 0, i = 0, il = arguments.length; i < il; i++) s += arguments[i].length;
+    for (var r = Array(s), k = 0, i = 0; i < il; i++)
+        for (var a = arguments[i], j = 0, jl = a.length; j < jl; j++, k++)
+            r[k] = a[j];
+    return r;
+};
+// Applies rotation matrix to a point (used to calculate path for coils)
+function applyRotationMatrix(point, center, angle) {
+    var angleCCW = 360 - angle;
+    var rotationMatrix = math.matrix([
+        [math.cos(math.unit(angle, 'degrees')), -math.sin(math.unit(angle, 'degrees'))],
+        [math.sin(math.unit(angle, 'degrees')), math.cos(math.unit(angle, 'degrees'))]
+    ]);
+    // Point translated to origin (0,0) , as the rotation matrix above is used for rotation around the center
+    var vector = math.matrix([
+        [point.x - center.x],
+        [point.y - center.y]
+    ]);
+    // Rotation matrix multiplied by column vector representing coordinates of a point
+    var rotatedPoint = math.multiply(rotationMatrix, vector);
+    // We need to translate back from the origin
+    var translatedBackPoint = {
+        'x': rotatedPoint._data[0][0] + center.x,
+        'y': rotatedPoint._data[1][0] + center.y,
+    };
+    return translatedBackPoint;
+}
+// Composes a path array for helix
+function composePathHelix(center, MINORAXIS, sse, CONVEXITY) {
+    return [
+        center.x + (MINORAXIS / 2), center.y + (sse[1].size / 2) - CONVEXITY,
+        center.x, center.y + (sse[1].size / 2),
+        center.x - (MINORAXIS / 2), center.y + (sse[1].size / 2) - CONVEXITY,
+        center.x - (MINORAXIS / 2), center.y - (sse[1].size / 2) + CONVEXITY,
+        center.x, center.y - (sse[1].size / 2),
+        center.x + (MINORAXIS / 2), center.y - (sse[1].size / 2) + CONVEXITY
+    ];
+}
+// Composes a path array for strand
+function composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD) {
+    return [
+        center.x + (MINORAXIS / 2), center.y - (sse[1].size / 2),
+        center.x + (MINORAXIS / 2), center.y + (sse[1].size / 2) - ARROW_HEIGHT,
+        center.x + (MINORAXIS / 2) + ARROW_SPREAD, center.y + (sse[1].size / 2) - ARROW_HEIGHT,
+        center.x, center.y + (sse[1].size / 2),
+        center.x - (MINORAXIS / 2) - ARROW_SPREAD, center.y + (sse[1].size / 2) - ARROW_HEIGHT,
+        center.x - (MINORAXIS / 2), center.y + (sse[1].size / 2) - ARROW_HEIGHT,
+        center.x - (MINORAXIS / 2), center.y - (sse[1].size / 2)
+    ];
+}
+// Converts a path array in Cartesian coordinates to Y-reversed coordinates used for drawing
+function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
+    var pathYReversed = pathCartesian.map(function (coord, index) {
+        if (index % 2 === 0) {
+            return coord - lowerLeft.x;
+        }
+        else {
+            return upperRight.y - coord;
+        }
+    });
+    return pathYReversed;
+}
+// TODO: Fix tsc errors
+// TODO: Check with Ivana to implement rotation properly
+// TODO: Check if residues from some of 5 used APIs correspond to what is in 2DProts
+// TODO: Write better function description
+// Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
+function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
+    // TODO: try different for both if something goes wrong
+    var MINORAXIS = 3 * 2;
+    var CONVEXITY = 2;
+    var ARROW_SPREAD = 1 * 2;
+    var ARROW_HEIGHT = 4;
+    // Coordinates of upper right and lower left corners of "canvas"
+    var upperRight = {
+        'x': inputJson.metadata['upper_right'][0],
+        'y': inputJson.metadata['upper_right'][1]
+    };
+    var lowerLeft = {
+        'x': inputJson.metadata['lower_left'][0],
+        'y': inputJson.metadata['lower_left'][1]
+    };
+    console.log(upperRight, lowerLeft);
+    var outputJSON = {};
+    // TODO: check if entityId (i.e. '1') should be determined in some way (e.g. if chainID = A, entityID = 1, if B => 2, etc.)
+    outputJSON[entryID] = { '1': {} };
+    outputJSON[entryID]['1'][chainID] = {
+        'helices': [],
+        'coils': [],
+        'strands': [],
+        'terms': [],
+        'extents': [],
+    };
+    var inputSSEs = Object.entries(inputJson.sses);
+    for (var _i = 0, inputSSEs_1 = inputSSEs; _i < inputSSEs_1.length; _i++) {
+        var sse = inputSSEs_1[_i];
+        console.log(sse);
+        // TEMPORARY: trying to guess the right multiplicator for coordinates (SSEs are too densly packed, though angles seem ok)
+        var center = {
+            'x': sse[1].layout[0] * 6.5,
+            'y': sse[1].layout[1] * 5.0,
+        };
+        var centerYReversed = {
+            'x': center.x - lowerLeft.x,
+            'y': upperRight.y - center.y
+        };
+        var topologyData = {
+            'start': Number(sse[1].residues[0]),
+            'stop': Number(sse[1].residues[1]),
+            'majoraxis': Number(sse[1].size),
+            'minoraxis': MINORAXIS,
+            'center': centerYReversed,
+            'color': sse[1].color,
+            'angle': sse[1].angles,
+            '2dprotsSSEId': sse[0],
+            'path': undefined,
+            // data for drawing coils between helices and/or strands
+            'startCoord': { 'x': undefined, 'y': undefined },
+            'stopCoord': { 'x': undefined, 'y': undefined },
+        };
+        var sseType = sse[0].charAt(0);
+        if (sseType === 'H') {
+            var pathCartesian = composePathHelix(center, MINORAXIS, sse, CONVEXITY);
+            topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
+            topologyData.stopCoord.x = topologyData.path[2];
+            topologyData.stopCoord.y = topologyData.path[3];
+            topologyData.startCoord.x = topologyData.path[8];
+            topologyData.startCoord.y = topologyData.path[9];
+            outputJSON[entryID]['1'][chainID].helices.push(topologyData);
+        }
+        else if (sseType == 'E' || '?') {
+            var pathCartesian = composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD);
+            topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
+            topologyData.startCoord.x = topologyData.center.x;
+            topologyData.startCoord.y = topologyData.center.y + topologyData.majoraxis / 2;
+            topologyData.stopCoord.x = topologyData.path[6];
+            topologyData.stopCoord.y = topologyData.path[7];
+            outputJSON[entryID]['1'][chainID].strands.push(topologyData);
+        }
+        else {
+            console.error('Unknown SSE type!');
+        }
+    }
+    // separate array for calculating coils data
+    var helicesAndSheets = __spreadArrays(outputJSON[entryID]['1'][chainID].helices, outputJSON[entryID]['1'][chainID].strands);
+    helicesAndSheets.sort(function (a, b) { return a.stop < b.start ? -1 : 1; });
+    console.log("Sorted helicesAndSheets array");
+    console.log(helicesAndSheets);
+    for (var i = 1; i < helicesAndSheets.length; i++) {
+        var sseBefore = helicesAndSheets[i - 1];
+        var sseAfter = helicesAndSheets[i];
+        if (sseBefore.stop + 1 === sseAfter.start) {
+            continue;
+        }
+        var coilTopologyData = {
+            'start': sseBefore.stop + 1,
+            'stop': sseAfter.start - 1,
+            'path': undefined,
+            // TODO: figure out how to determine the color
+            'color': undefined,
+        };
+        var coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
+        console.log(coilStartPoint);
+        var coilStopPoint = applyRotationMatrix(sseAfter.stopCoord, sseAfter.center, sseAfter.angle);
+        console.log(coilStopPoint);
+        // Calculate path based on data from the two SSEs (the one before and the one after this coil)
+        // TODO: apply corresponding rotation matrices to each point
+        coilTopologyData.path = [
+            coilStartPoint.x,
+            coilStartPoint.y,
+            coilStopPoint.x,
+            coilStopPoint.y,
+        ];
+        outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
+    }
+    return outputJSON;
+}
 var PdbTopologyViewerPlugin = /** @class */ (function () {
     function PdbTopologyViewerPlugin() {
         this.defaultColours = {
             domainSelection: 'rgb(255,0,0)',
-            //mouseOver: 'rgb(105,105,105)',
-            mouseOver: 'rgb(255,0,0)',
+            mouseOver: 'rgb(105,105,105)',
+            //mouseOver: 'rgb(255,0,0)',
             borderColor: 'rgb(0,0,0)',
             qualityGreen: 'rgb(0,182.85714285714286,0)',
             qualityRed: 'rgb(291.42857142857144,0,0)',
@@ -132,6 +310,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             }
         };
     }
+    // Not used here
     PdbTopologyViewerPlugin.prototype.render = function (target, options) {
         var _this_1 = this;
         if (options && typeof options.displayStyle != 'undefined' && options.displayStyle != null)
@@ -151,6 +330,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             this.subscribeEvents = false;
         this.entityId = options.entityId;
         this.entryId = options.entryId.toLowerCase();
+        // TODO: Investigate what it does to undertand what entityId to write to converted JSON (always 1, or 1 if chain A, 2 if B etc.)
         //If chain id is not provided then get best chain id from observed residues api
         if (typeof options.chainId == 'undefined' || options.chainId == null) {
             this.getObservedResidues(this.entryId).then(function (result) {
@@ -168,10 +348,13 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             this.initPainting();
         }
     };
+    // Not used here
     PdbTopologyViewerPlugin.prototype.initPainting = function () {
         var _this_1 = this;
         this.getApiData(this.entryId, this.chainId).then(function (result) {
             if (result) {
+                result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], _this_1.entryId, _this_1.chainId);
+                console.log(result[2]);
                 //Validate required data in the API result set (0, 2, 4)
                 if (typeof result[0] == 'undefined' || typeof result[2] == 'undefined' || typeof result[4] == 'undefined') {
                     _this_1.displayError();
@@ -223,7 +406,14 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 dataUrls = [
                     "https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/" + pdbId,
                     "https://www.ebi.ac.uk/pdbe/api/mappings/" + pdbId,
-                    "https://www.ebi.ac.uk/pdbe/api/topology/entry/" + pdbId,
+                    // https://jsonstorage.net/api/items/280e51f7-6953-4979-bf8a-0b22970317c8 - distorted only helix
+                    // https://jsonstorage.net/api/items/a6e44d75-5beb-4768-9cfa-d7124ddc5e9f - both helix and strand (wrong)
+                    // https://jsonstorage.net/api/items/f05f7ac3-2880-42d1-8ce0-02f754bc6f54 - both helix and strand (correct, but placed not so well)
+                    // https://jsonstorage.net/api/items/510463b5-d100-4a51-afaf-2d7d6145361d - both helix and strand (CORRECT!)
+                    // https://jsonstorage.net/api/items/64b59c12-c0bf-44f9-aadd-78770e49abc8 - both 1 helix (CORRECT) and strand (CORRECT)
+                    // https://jsonstorage.net/api/items/93ad97dc-e180-4a94-8433-5e71b48c189e - both 2 helix (CORRECT) and strand (CORRECT)
+                    // Latest: `https://cors-anywhere.herokuapp.com/https://jsonstorage.net/api/items/4d8d5d12-8492-47e2-89ea-4d9d8d30ccb1`,
+                    "https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/67e956fe787f1a79d0b85325fce2680f94ddebb0/3myt_D00_data.json",
                     "https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/" + pdbId,
                     "https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/" + pdbId + "/chain/" + chainId
                 ];
@@ -239,6 +429,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             });
         });
     };
+    // Returns array of sequence letters
     PdbTopologyViewerPlugin.prototype.getPDBSequenceArray = function (entities) {
         var totalEntities = entities.length;
         for (var i = 0; i < totalEntities; i++) {
@@ -247,6 +438,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             }
         }
     };
+    // Returns a new array, consisting of sub-arrays, each of which is a "chunk" of set length ("len") based on the input array
+    // E.g. chunkArray([1, 2, 3, 4, 5], 2) => [[1, 2], [3, 4], [5]]
     PdbTopologyViewerPlugin.prototype.chunkArray = function (arr, len) {
         var chunks = [], i = 0, n = arr.length;
         while (i < n) {
@@ -254,6 +447,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         }
         return chunks;
     };
+    //Based on Topology data from PDBe (i.e. coordinates of SSEs), creates scale functions and zoom function
     PdbTopologyViewerPlugin.prototype.getDomainRange = function () {
         var _this_1 = this;
         var allCordinatesArray = [];
@@ -264,25 +458,34 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 topologyData[secStrType].forEach(function (secStrData) {
                     if (typeof secStrData.path !== 'undefined' && secStrData.path.length > 0) {
                         allCordinatesArray = allCordinatesArray.concat(_this_1.chunkArray(secStrData.path, 2));
+                        // something like [[1, 2], [2, 4], [130, 5]] etc.
+                        // each subarray is a pair of Cartesian coordinates, i.e. [x, y]
                     }
                 });
             }
         }
         ;
+        // d3.scaleLinear creates function (e.g. called xScale) that maps domain to range
+        // so that xScale(z) will yield the value from range corresponding to z
+        // so in essence it is 'normalization' utility
         this.xScale = d3.scaleLinear()
             .domain([d3.min(allCordinatesArray, function (d) { return d[0]; }), d3.max(allCordinatesArray, function (d) { return d[0]; })])
             .range([1, this.svgWidth - 1]);
         this.yScale = d3.scaleLinear()
             .domain([d3.min(allCordinatesArray, function (d) { return d[1]; }), d3.max(allCordinatesArray, function (d) { return d[1]; })])
             .range([1, this.svgHeight - 1]);
+        // apparently zoom behaviour
         this.zoom = d3.zoom()
             .on("zoom", function () { return _this_1.zoomDraw(); });
         //.scaleExtent([.5, 20])  // This control how much you can unzoom (x0.5) and zoom (x20)
         // .transform(this.xScale, this.yScale)
     };
+    // TODO: method needs to be modified: subPathHeight assumes that the SVG element is vertical, while in 2DProts it can oriented arbitrarily
+    // TODO: very important for any SSE is to be able to get its length to obtain the length of residue subelements
     PdbTopologyViewerPlugin.prototype.drawStrandSubpaths = function (startResidueNumber, stopResidueNumber, index) {
         var _this = this;
         var totalAaInPath = (stopResidueNumber - startResidueNumber) + 1;
+        // height of one subelement
         var subPathHeight = (this.scaledPointsArr[7] - this.scaledPointsArr[1]) / totalAaInPath;
         //create subsections/paths
         var dValArr = [];
@@ -309,6 +512,12 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             dValArr.push(subPathObj);
         }
         this.svgEle.selectAll('.subpath-strands' + index).remove();
+        // What it does: (jonathansoma.com/tutorials//d3...)
+        // 1. selects all elements based on CSS selector
+        // 2. binds data array to them (dValArr)
+        // 3. enter() access all data points without an element
+        // 4. append() appends 'path' element for each
+        // so that you will have many smaller path elements, corresponding to residues, filling the bigger one
         this.svgEle.selectAll('.subpath-strands' + index)
             .data(dValArr)
             .enter()
@@ -463,6 +672,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             chainId: this.chainId,
         });
     };
+    // Draws subelements of helices (i.e. residues, that are highlighted on hover)
     PdbTopologyViewerPlugin.prototype.drawHelicesSubpaths = function (startResidueNumber, stopResidueNumber, index, curveYdiff) {
         var _this = this;
         curveYdiff = 0;
@@ -471,11 +681,16 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         if (this.scaledPointsArr[3] > this.scaledPointsArr[9])
             curveYdiff2 = curveYdiff + diffVal;
         var totalAaInPath = (stopResidueNumber - startResidueNumber) + 1;
+        // Seems that this IF is always true => both are = 0
         if (curveYdiff === 0)
             curveYdiff2 = 0;
+        // Calculates height (Y) of an individual subpath element (i.e. a residue)
         var subPathHeight = ((this.scaledPointsArr[9] - curveYdiff2) - this.scaledPointsArr[3]) / totalAaInPath;
         var startPoint = 0;
         if (curveYdiff === 0) {
+            // d3.node return first element in selection
+            // SVGGraphicsElement.getBBox returns coordinates of rectangle in which SVG element fits
+            // In this case it selects TopologyEle (outer helix not divided onto residues)
             var boxHeight = (this.svgEle.select('.helices' + index).node().getBBox().height) + (subPathHeight / 2);
             var singleUnitHt = boxHeight / totalAaInPath;
             //boxHeight = boxHeight - singleUnitHt; //height correction
@@ -680,45 +895,45 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         }
         var termsData = this.apiData[2][this.entryId][this.entityId][this.chainId].terms;
         var totalCoilsInStr = this.apiData[2][this.entryId][this.entityId][this.chainId].coils.length;
-        if (index === 0) {
-            this.svgEle.selectAll('.terminal_N').remove();
-            this.svgEle.selectAll('.terminal_N')
-                .data([termsData[0]])
-                .enter()
-                .append('text')
-                .attr('class', 'terminals terminal_N')
-                .attr('text-anchor', 'middle')
-                .text('N')
-                .attr('x', subPathCordsArr[0]['pathData'][0])
-                .attr('y', subPathCordsArr[0]['pathData'][1])
-                .attr('stroke', '#0000ff')
-                .attr('stroke-width', '0.3')
-                // .attr('font-size', 3 * this.zoom.scale() +'px')
-                .attr('font-size', '3px')
-                .attr('style', "-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;");
-        }
-        else if (index === totalCoilsInStr - 1) {
-            var pathDataLen = subPathCordsArr[totalAaInPath - 1]['pathData'].length;
-            var adjustmentFactor = -2;
-            if (subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 1] > subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 3]) {
-                adjustmentFactor = 2;
-            }
-            this.svgEle.selectAll('.terminal_C').remove();
-            this.svgEle.selectAll('.terminal_C')
-                .data([termsData[1]])
-                .enter()
-                .append('text')
-                .attr('class', 'terminals terminal_N')
-                .attr('text-anchor', 'middle')
-                .text('C')
-                .attr('x', subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 2])
-                .attr('y', subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 1] + adjustmentFactor)
-                .attr('stroke', '#ff0000')
-                .attr('stroke-width', '0.3')
-                // .attr('font-size', 3 * this.zoom.scale() +'px')
-                .attr('font-size', '3px')
-                .attr('style', "-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;");
-        }
+        // For now, N and C letters at the N and C ends of protein are turned off (there is some error occuring)
+        // if(index === 0){
+        // this.svgEle.selectAll('.terminal_N').remove();
+        // this.svgEle.selectAll('.terminal_N')
+        // .data([termsData[0]])
+        // .enter()
+        // .append('text')
+        // .attr('class', 'terminals terminal_N')
+        // .attr('text-anchor','middle')
+        // .text('N')
+        // .attr('x', subPathCordsArr[0]['pathData'][0])
+        // .attr('y', subPathCordsArr[0]['pathData'][1])
+        // .attr('stroke','#0000ff')
+        // .attr('stroke-width','0.3')
+        // // .attr('font-size', 3 * this.zoom.scale() +'px')
+        // .attr('font-size', '3px')
+        // .attr('style',"-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;")
+        // }else if(index === totalCoilsInStr - 1){
+        // const pathDataLen = subPathCordsArr[totalAaInPath - 1]['pathData'].length;
+        // let adjustmentFactor = -2;
+        // if(subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 1] > subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 3]){
+        // adjustmentFactor = 2;
+        // }
+        // this.svgEle.selectAll('.terminal_C').remove();
+        // this.svgEle.selectAll('.terminal_C')
+        // .data([termsData[1]])
+        // .enter()
+        // .append('text')
+        // .attr('class', 'terminals terminal_N')
+        // .attr('text-anchor','middle')
+        // .text('C')
+        // .attr('x', subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 2])
+        // .attr('y', subPathCordsArr[totalAaInPath - 1]['pathData'][pathDataLen - 1] + adjustmentFactor)
+        // .attr('stroke','#ff0000')
+        // .attr('stroke-width','0.3')
+        // // .attr('font-size', 3 * this.zoom.scale() +'px')
+        // .attr('font-size', '3px')
+        // .attr('style',"-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;")
+        // }
     };
     PdbTopologyViewerPlugin.prototype.drawTopologyStructures = function () {
         var _this_1 = this;
@@ -745,7 +960,9 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         this.svgEle = d3.select(this.targetEle).select('.topoSvg');
         this.getDomainRange();
         this.scaledPointsArr = [];
-        this.svgEle.call(this.zoom).on("contextmenu", function (d, i) { d3.event.preventDefault(); }); //add zoom event and block right click event
+        // this.svgEle.call(this.zoom).on("contextmenu", function (d:any, i:number) { d3.event.preventDefault(); }); //add zoom event and block right click event
+        // No zoom for now
+        this.svgEle.on("contextmenu", function (d, i) { d3.event.preventDefault(); }); //add zoom event and block right click event
         var topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
         var _loop_2 = function (secStrType) {
             // angular.forEach(this.apiResult.data[_this.entryId].topology[scope.entityId][scope.bestChainId], function(secStrArr, secStrType) {
@@ -760,29 +977,56 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                     }
                     else {
                         var curveYdiff = 0;
+                        // TODO: UNCOMMENT - IT IS USED, YOU COMMENTED IT TO DO MOCKUP FOR VIS II
+                        // or better rewrite this functionality - e.g. as a separate function (determine distance between any two points in 2D space)
                         //modify helices path data to create a capsule like structure
-                        if (secStrType === 'helices') {
-                            var curveCenter = secStrData.path[0] + ((secStrData.path[2] - secStrData.path[0]) / 2);
-                            curveYdiff = 2 * (secStrData.minoraxis * 1.3);
-                            if (secStrData.path[1] > secStrData.path[3]) {
-                                curveYdiff = -2 * (secStrData.minoraxis * 1.3);
-                            }
-                            var newPathCords = [
-                                secStrData.path[0], secStrData.path[1],
-                                curveCenter, secStrData.path[1] - curveYdiff,
-                                secStrData.path[2], secStrData.path[1],
-                                secStrData.path[2], secStrData.path[3],
-                                curveCenter, secStrData.path[3] + curveYdiff,
-                                secStrData.path[0], secStrData.path[3]
-                            ];
-                            secStrData.path = newPathCords;
-                        }
+                        // if(secStrType === 'helices'){
+                        //     const curveCenter = secStrData.path[0] + ((secStrData.path[2] - secStrData.path[0])/2);
+                        //     curveYdiff = 2 * (secStrData.minoraxis * 1.3);
+                        //     if(secStrData.path[1] >  secStrData.path[3]){
+                        //         curveYdiff = -2 * (secStrData.minoraxis * 1.3);
+                        //     }
+                        //     // 6 points to draw capsule
+                        //     const newPathCords = [
+                        //         secStrData.path[0], secStrData.path[1],
+                        //         curveCenter, secStrData.path[1] - curveYdiff,
+                        //         secStrData.path[2], secStrData.path[1],
+                        //         secStrData.path[2], secStrData.path[3],
+                        //         curveCenter, secStrData.path[3] + curveYdiff,
+                        //         secStrData.path[0], secStrData.path[3]
+                        //     ];
+                        //     secStrData.path = newPathCords;
+                        // }
+                        // New version of helices coordinates modification to draw 'rotatable' capsule
+                        // if(secStrType === 'helices'){
+                        //     const curveCenter = secStrData.path[0] + ((secStrData.path[2] - secStrData.path[0])/2);
+                        //     curveYdiff = 2 * (secStrData.minoraxis * 1.3);
+                        //     if(secStrData.path[1] >  secStrData.path[3]){
+                        //         curveYdiff = -2 * (secStrData.minoraxis * 1.3);
+                        //     }
+                        //     // 6 points to draw capsule
+                        //     const newPathCords = [
+                        //         secStrData.path[0], secStrData.path[1],
+                        //         curveCenter, secStrData.path[1] - curveYdiff,
+                        //         secStrData.path[2], secStrData.path[1],
+                        //         secStrData.path[2], secStrData.path[3],
+                        //         curveCenter, secStrData.path[3] + curveYdiff,
+                        //         secStrData.path[0], secStrData.path[3]
+                        //     ];
+                        //     secStrData.path = newPathCords;
+                        // }
+                        // adds new properties to array obtained from PDBe topology API
                         secStrData.secStrType = secStrType;
                         secStrData.pathIndex = secStrDataIndex;
+                        // selectAll is d3 function that selects elements based on CSS-like query
                         var newEle = _this_1.svgEle.selectAll('path.' + secStrType + '' + secStrDataIndex)
+                            // d3.data binds array of data to previously selected elements
                             .data([secStrData])
+                            // dynamically creates missing elements (from selectAll) if number of data values and nodes is not matching
                             .enter()
+                            // appends them all to svgEle
                             .append('path')
+                            // TODO (not important for now)
                             .attr('class', function () {
                             if (secStrData.start === -1 && secStrData.stop === -1 && secStrType !== 'terms') {
                                 return 'dashedEle topologyEle ' + secStrType + ' ' + secStrType + '' + secStrDataIndex + ' topoEleRange_' + secStrData.start + '-' + secStrData.stop;
@@ -792,29 +1036,41 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             }
                         })
                             .attr('d', function (d) {
+                            // SVG coordinate system starts with top left corner
+                            // Command "Move To"
                             var dVal = 'M';
                             var pathLenth = secStrData.path.length;
                             var xScaleFlag = true;
                             //if(secStrData.path[1] > secStrData.path[7]) maskDiff = 1;
                             for (var i = 0; i < pathLenth; i++) {
+                                // 6 points in case of helices, so 12 values, so we go from 0 to 11 (including)
+                                // Here it switches to Bezeir Curve
                                 if (secStrType === 'helices' && (i === 2 || i === 8))
                                     dVal += ' Q';
                                 //if(secStrType === 'coils' && secStrData.path.length < 12 && i === 2) dVal += ' C'
                                 //if(secStrType === 'coils' && secStrData.path.length < 14 && secStrData.path.length > 12 && i === 4) dVal += ' C'
+                                // Here it switches to "Line To" after it is done with Bezeir Curve (on the top and bottom of helices)
+                                // TODO: But what about coils?
                                 if ((secStrType === 'helices' && i === 6) || (secStrType === 'coils' && secStrData.path.length < 12 && i === 8))
                                     dVal += ' L';
+                                // On first iteration it does this
                                 if (xScaleFlag) {
+                                    // Uses previously created scale function to 'normalize' the X coordinate
                                     var xScaleValue = _this_1.xScale(secStrData.path[i]);
+                                    // Adds it right after "Move to"
                                     dVal += ' ' + xScaleValue;
+                                    // And also gather them all in some array
                                     _this_1.scaledPointsArr.push(xScaleValue);
                                 }
                                 else {
+                                    // on next iteration xScaleFlag is alredy false, so it deals with "Y scale" in a simlar way
                                     var yScaleValue = _this_1.yScale(secStrData.path[i]);
                                     dVal += ' ' + yScaleValue;
                                     _this_1.scaledPointsArr.push(yScaleValue);
                                 }
                                 xScaleFlag = !xScaleFlag;
                             }
+                            // Switches to "Close Path", in case of strands and helices
                             if (secStrType === 'strands' || secStrType === 'helices')
                                 dVal += ' Z';
                             return dVal;
@@ -827,6 +1083,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                         }
                         //hightlight node calculations
                         if (secStrType === 'strands') {
+                            var xCenterScaled = _this_1.xScale(secStrData.center.x);
+                            var yCenterScaled = _this_1.yScale(secStrData.center.y);
                             //create subsections/paths
                             _this_1.drawStrandSubpaths(secStrData.start, secStrData.stop, secStrDataIndex);
                             //Create mask to restore shape
@@ -834,9 +1092,14 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             //bring original/complete helices in front newEle
                             // this.svgEle.append(newEle.node());		
                             _this_1.svgEle._groups[0][0].append(newEle.node());
+                            var allElementsBelongingToStrand = d3.selectAll(".strands" + secStrDataIndex + ", .maskpath-strands" + secStrDataIndex + ", .subpath-strands" + secStrDataIndex)
+                                .attr('transform', "rotate(" + secStrData.angle + ", " + xCenterScaled + ", " + yCenterScaled + ")");
+                            console.log(allElementsBelongingToStrand);
                         }
                         //for helices
                         if (secStrType === 'helices') {
+                            var xCenterScaled = _this_1.xScale(secStrData.center.x);
+                            var yCenterScaled = _this_1.yScale(secStrData.center.y);
                             //create subsections/paths
                             _this_1.drawHelicesSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, curveYdiff);
                             //Create mask to restore shape
@@ -844,6 +1107,9 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             // //bring original/complete helices in front
                             // angular.element(element[0].querySelector('.topoSvg')).append(newEle.node());
                             _this_1.svgEle._groups[0][0].append(newEle.node());
+                            var allElementsBelongingToHelix = d3.selectAll(".helices" + secStrDataIndex + ", .maskpath-helices" + secStrDataIndex + ", .subpath-helices" + secStrDataIndex)
+                                .attr('transform', "rotate(" + secStrData.angle + ", " + xCenterScaled + ", " + yCenterScaled + ")");
+                            console.log(allElementsBelongingToHelix);
                         }
                         //for coils
                         if (secStrType === 'coils') {
@@ -861,6 +1127,19 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 return state_1.value;
         }
         ;
+        // Upon user hover on Topology Component residue, highlight that residue in MolStar view 
+        d3.selectAll('path.helicesSubPath, path.strandsSubPath, path.coilsSubPath').on('mouseover', function (event) {
+            // console.log(this); //Element itself
+            // console.log(event); //event with element index, residue_number, path, type (e.g. strand)
+            console.log(event);
+            var data = {
+                'residue_number': event.residue_number,
+                'entityId': _this_1.entityId,
+                'chainId': _this_1.chainId,
+            };
+            var PDBTopologyComponentMouseoverEvent = new CustomEvent('PDB.topologyComponent.mouseover', { 'detail': data });
+            document.dispatchEvent(PDBTopologyComponentMouseoverEvent);
+        });
         //bring rsrz validation circles in front
         this.svgEle._groups[0][0].append(this.svgEle.selectAll('.validationResidue').node());
     };
@@ -1019,6 +1298,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 }
             })
                 .attr('d', residueEle.attr('d'))
+                .attr('transform', residueEle.attr('transform'))
                 .attr('fill', fill)
                 .attr('fill-opacity', 0.5)
                 .attr('stroke', stroke)

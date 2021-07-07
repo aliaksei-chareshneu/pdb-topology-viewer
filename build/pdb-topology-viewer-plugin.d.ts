@@ -1,3 +1,11 @@
+declare function applyRotationMatrix(point: any, center: any, angle: any): {
+    x: any;
+    y: any;
+};
+declare function composePathHelix(center: any, MINORAXIS: any, sse: any, CONVEXITY: any): any[];
+declare function composePathStrand(center: any, MINORAXIS: any, sse: any, ARROW_HEIGHT: any, ARROW_SPREAD: any): any[];
+declare function convertPathCartesianToYReversed(pathCartesian: any, lowerLeft: any, upperRight: any): any;
+declare function convert2DProtsJSONtoTopologyAPIJSON(inputJson: any, entryID: any, chainID: any): {};
 declare class PdbTopologyViewerPlugin {
     defaultColours: {
         domainSelection: string;
