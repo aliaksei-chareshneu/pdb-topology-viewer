@@ -81,41 +81,41 @@
 	<!-- PDB Mol* component script -->
 	<script>
       //Create plugin instance
-		<!-- var viewerInstance = new PDBeMolstarPlugin(); -->
+		var viewerInstance = new PDBeMolstarPlugin();
 
-		<!-- //Set options (Checkout available options list in the documentation) -->
-		<!-- var options = { -->
-			<!-- moleculeId: '3myt', -->
-			<!-- hideControls: true -->
-		<!-- } -->
+		//Set options (Checkout available options list in the documentation)
+		var options = {
+			moleculeId: '3myt',
+			hideControls: true
+		}
 
-		<!-- //Get element from HTML/Template to place the viewer  -->
-		<!-- var viewerContainer = document.getElementById('myViewer'); -->
+		//Get element from HTML/Template to place the viewer 
+		var viewerContainer = document.getElementById('myViewer');
 
-		<!-- //Call render method to display the 3D view -->
-		<!-- viewerInstance.render(viewerContainer, options); -->
+		//Call render method to display the 3D view
+		viewerInstance.render(viewerContainer, options);
 		
-		<!-- const targetChainSelection = [{ -->
-			<!-- struct_asym_id: 'D',  -->
-			<!-- color:{r:255,g:255,b:255}, -->
-			<!-- focus: true, -->
-		<!-- }]; -->
+		const targetChainSelection = [{
+			struct_asym_id: 'D', 
+			color:{r:255,g:255,b:255},
+			focus: true,
+		}];
 		
-		<!-- viewerInstance.events.loadComplete.subscribe(() => { -->
-			<!-- viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}}); -->
-		<!-- }); -->
+		viewerInstance.events.loadComplete.subscribe(() => {
+			viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}});
+		});
 		
-		<!-- // Upon user hover on Topology Component residue, highlight that residue in MolStar view -->
-		<!-- document.addEventListener('PDB.topologyComponent.mouseover', (event) => { -->
-			<!-- viewerInstance.visual.highlight({ data: [{ -->
-				<!-- entity_id: event.detail['entityId'], -->
-				<!-- struct_asym_id: event.detail['chainId'], -->
-				<!-- residue_number: event.detail['residue_number'], -->
-			<!-- }], color: {r:255,g:0,b:0},}); -->
-		<!-- }); -->
+		// Upon user hover on Topology Component residue, highlight that residue in MolStar view
+		document.addEventListener('PDB.topologyComponent.mouseover', (event) => {
+			viewerInstance.visual.highlight({ data: [{
+				entity_id: event.detail['entityId'],
+				struct_asym_id: event.detail['chainId'],
+				residue_number: event.detail['residue_number'],
+			}], color: {r:255,g:0,b:0},});
+		});
 		
-		<!-- document.addEventListener('PDB.topologyComponent.click', (event) => { -->
-		<!-- }); -->
+		document.addEventListener('PDB.topologyComponent.click', (event) => {
+		});
 	  
     </script>
   </body>
