@@ -182,7 +182,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		
 		const coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
 		console.log(coilStartPoint);
-		const coilStopPoint = applyRotationMatrix(sseAfter.stopCoord, sseAfter.center, sseAfter.angle);
+		const coilStopPoint = applyRotationMatrix(sseAfter.startCoord, sseAfter.center, sseAfter.angle);
 		console.log(coilStopPoint);
 		
 		// Calculate path based on data from the two SSEs (the one before and the one after this coil)
@@ -194,7 +194,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 			coilStopPoint.y,
 		];
 		// Coils are disabled for now - need to fix their positioning and residue content
-		// outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
+		outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
 	}
 	
 	return outputJSON;
