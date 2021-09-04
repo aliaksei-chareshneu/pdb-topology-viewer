@@ -72,10 +72,15 @@ function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
 // Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 	// TODO: try different for both if something goes wrong
-	const MINORAXIS = 3 * 2;
-	const CONVEXITY = 2;
-	const ARROW_SPREAD = 1 * 2;
-	const ARROW_HEIGHT = 4;
+	// const MINORAXIS = 3 * 2;
+	// const CONVEXITY = 2;
+	// const ARROW_SPREAD = 1 * 2;
+	// const ARROW_HEIGHT = 4;
+	
+	const MINORAXIS = 3 * 2 / 5;
+	const CONVEXITY = 2 / 5;
+	const ARROW_SPREAD = 1 * 2 / 5;
+	const ARROW_HEIGHT = 4 / 5;
 	
 	// Coordinates of upper right and lower left corners of "canvas"
 	const upperRight = {
@@ -108,10 +113,10 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		
 		// TEMPORARY: trying to guess the right multiplicator for coordinates (SSEs are too densly packed, though angles seem ok)
 		const center = {
-			'x': sse[1].layout[0] * 6.5,
-			'y': sse[1].layout[1] * 5.0,
-			// 'x': sse[1].layout[0],
-			// 'y': sse[1].layout[1],
+			// 'x': sse[1].layout[0] * 6.5,
+			// 'y': sse[1].layout[1] * 5.0,
+			'x': sse[1].layout[0],
+			'y': sse[1].layout[1],
 		};
 		
 		const centerYReversed = {
@@ -347,7 +352,14 @@ class PdbTopologyViewerPlugin {
             // https://jsonstorage.net/api/items/64b59c12-c0bf-44f9-aadd-78770e49abc8 - both 1 helix (CORRECT) and strand (CORRECT)
             // https://jsonstorage.net/api/items/93ad97dc-e180-4a94-8433-5e71b48c189e - both 2 helix (CORRECT) and strand (CORRECT)
             // Latest: `https://cors-anywhere.herokuapp.com/https://jsonstorage.net/api/items/4d8d5d12-8492-47e2-89ea-4d9d8d30ccb1`,
-            `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/67e956fe787f1a79d0b85325fce2680f94ddebb0/3myt_D00_data.json`,
+			// This works with hand-picked multiplicators
+            // `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/67e956fe787f1a79d0b85325fce2680f94ddebb0/3myt_D00_data.json`,
+			// These two has incorrect angles for some strands, and helices
+			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/236fa166e432af64b9cfaf494169be357c90b070/image-3oh1_A02.json`,
+			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/236fa166e432af64b9cfaf494169be357c90b070/image-3oh2_A02.json`,
+			// The following two should work:
+			`https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3oh1_A02.json`,
+			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3ogz_A02.json`,
 			`https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         ]
