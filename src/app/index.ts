@@ -1,4 +1,5 @@
 // TODO: coils path seem to need to consist from the number of point corresponding to number of residues. Check with original TOpology component on web
+// No, it does not need for us - as we do it as straight lines. Just separate them on clickable elements
 // TODO: drawing of helices and strands can be done via rotation matrix as well. Maybe it can help to solve precision location issues (coils vs everything else)
 // TODO: residue numbering in subpath of some helices seem to be wrong. Angle problems? +/-
 
@@ -809,9 +810,13 @@ class PdbTopologyViewerPlugin {
     drawCoilsSubpaths (startResidueNumber:number, stopResidueNumber:number, index:number) {
         const _this = this;
         
+		// Selects specific coil
         const coilEle = this.svgEle.select('.coils'+index);
+		// Calculates number of residues
         const totalAaInPath = (stopResidueNumber - startResidueNumber) + 1
+		// Total length of path in user units
         const coilLength = coilEle.node().getTotalLength();
+		// Length of a single subpath element for one residue
         const subPathLength = coilLength/totalAaInPath;
         
         let subPathCordsArr = [];
@@ -820,6 +825,7 @@ class PdbTopologyViewerPlugin {
         //var prevSubPathCord = [];
         let newSubPathCords:any = {};
         
+		// TODO: check if this is correct implementation for our case (2DProts)
         if(totalAaInPath === 1){
             newSubPathCords = {
                 residue_number: startResidueNumber,
@@ -831,38 +837,63 @@ class PdbTopologyViewerPlugin {
         
         }else{
             for(let subPathIndex=0; subPathIndex<totalAaInPath; subPathIndex++){
-                
+                // Check this - most likely issue with separation of coils is here
+				// E.g. 14, 28, 42 (iterations)
                 const segLength = subPathLength * (subPathIndex + 1);
+				// Calculates svgpoint coordinates {x: _, y: } for points lying in 14, 28, 42 ... from the start of coil path
                 const subPathCord = coilEle.node().getPointAtLength(segLength);
-                const cordArrPositon = coilEle.node().getPathSegAtLength(segLength);
-                newSubPathCords = {
+				// aLWAYS yields 1 in our case - useless, turning off
+                // const cordArrPositon = coilEle.node().getPathSegAtLength(segLength);
+				// TEMPORARY
+				const cordArrPositon = 0;
+                
+				newSubPathCords = {
                     residue_number: startResidueNumber + subPathIndex,
                     type: 'coils',
                     elementIndex: index
                 }
-            
-                if(cordArrPositon === 1){
+				
+				// As in our case it is 1, this if is used always => outputs arr with first two elements of scaledPointsArr
+                // Let's turn it off (set cordArrPosition to 0 above) as in our case its always 1 and we want to draw subpaths even in that case
+				if(cordArrPositon === 1){
                     newSubPathCords['pathData'] = _this.scaledPointsArr.slice(0, 2);
+					
+				// So to make it go for else, cordArrPositon should not be = 1, so the path element itself should have pathSegList._list (effectively d attribute with several segments, not just one)
+				// Or we could simply change the implementation of the feature (change code below so that it works with straight 2Dprots coils properly)
                 }else{
                 
                     if(prevCordArrPositon === undefined){
-                        newSubPathCords['pathData'] = _this.scaledPointsArr.slice(0, cordArrPositon * 2);
-                    }else{
-                        newSubPathCords['pathData'] = _this.scaledPointsArr.slice(prevCordArrPositon * 2, cordArrPositon * 2);
-                        newSubPathCords['pathData'].unshift(prevPathCord.x, prevPathCord.y);
+						// So if for 1cbs cordArrPosition is 3 for the coil0, it will provide 3 points for the first residue in that coil
+                        // So e.g. it will extract for coil0 first residue (1cbs pdb) 6 array elements
+						// newSubPathCords['pathData'] = _this.scaledPointsArr.slice(0, cordArrPositon * 2);
+						newSubPathCords['pathData'] = [_this.scaledPointsArr[0], _this.scaledPointsArr[1], subPathCord.x, subPathCord.y];
+					
+					}else{
+						// Make new slice from the original scaledPointsArr - start on the array index corresponding to the end of last calculated residue, end on cordArrPosition of that coil
+						// So it will do slice(3, 4) => extract 7th and 8th element for the second iteration of the loop (second residue)
+                        // newSubPathCords['pathData'] = _this.scaledPointsArr.slice(prevCordArrPositon * 2, cordArrPositon * 2);
+                        // Why unshift? Because above it extracts just next point, but we need start anyway
+						// So it effectively duplicates the end point of previous residue in that coil
+						// newSubPathCords['pathData'].unshift(prevPathCord.x, prevPathCord.y);
+						newSubPathCords['pathData'] = [prevPathCord.x, prevPathCord.y, subPathCord.x, subPathCord.y];
                     
                     }
                     
+					// Here it will save ending svgpoint of the path for residue in that coil that was just calculated in the if above (or in else for next iterations)
                     prevPathCord = subPathCord;
+					// Similarly saving cordArrPosition of the last residue
                     prevCordArrPositon = cordArrPositon;
                 
                 }
                 
-                newSubPathCords['pathData'] = newSubPathCords['pathData'].concat([subPathCord.x, subPathCord.y]);
+				// Perhaps we don't need this anymore
+                // newSubPathCords['pathData'] = newSubPathCords['pathData'].concat([subPathCord.x, subPathCord.y]);
                 subPathCordsArr.push(newSubPathCords);
             }
         
         }
+		console.log(`subPathCordsArr for .coils${index}`)
+		console.log(subPathCordsArr)
         
         if(startResidueNumber !== -1 && stopResidueNumber !== -1){
             this.svgEle.selectAll('.subpath-coils'+index).remove();
