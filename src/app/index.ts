@@ -178,7 +178,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 			'stop': sseAfter.start - 1,
 			'path': undefined,
 			// TODO: figure out how to determine the color
-			'color': undefined,
+			'color': sseAfter.color,
 		};
 		
 		const coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
@@ -807,7 +807,7 @@ class PdbTopologyViewerPlugin {
         
     }
 
-    drawCoilsSubpaths (startResidueNumber:number, stopResidueNumber:number, index:number) {
+    drawCoilsSubpaths (startResidueNumber:number, stopResidueNumber:number, index:number, color:string) {
         const _this = this;
         
 		// Selects specific coil
@@ -831,7 +831,8 @@ class PdbTopologyViewerPlugin {
                 residue_number: startResidueNumber,
                 type: 'coils',
                 pathData: _this.scaledPointsArr,
-                elementIndex: index
+                elementIndex: index,
+				color: color,
             }
             subPathCordsArr.push(newSubPathCords)
         
@@ -850,7 +851,8 @@ class PdbTopologyViewerPlugin {
 				newSubPathCords = {
                     residue_number: startResidueNumber + subPathIndex,
                     type: 'coils',
-                    elementIndex: index
+                    elementIndex: index,
+					color: color,
                 }
 				
 				// As in our case it is 1, this if is used always => outputs arr with first two elements of scaledPointsArr
@@ -904,7 +906,8 @@ class PdbTopologyViewerPlugin {
                 .append('path')  
                 .attr('class', function(d:any){ return 'coilsSubPath subpath-coils'+index+' topo_res_'+d.residue_number })
                 .attr('d', function(d:any){ return 'M '+d.pathData.join(' ') })
-                .attr('stroke', this.defaultColours.borderColor)
+                // .attr('stroke', this.defaultColours.borderColor)
+				.attr('stroke', function(d:any){ return d.color })
                 .attr('stroke-width', 0.3)
                 .attr('fill', 'none')
                 .attr('stroke-opacity','1')
@@ -1118,7 +1121,7 @@ class PdbTopologyViewerPlugin {
                             if(secStrType === 'strands' || secStrType === 'helices') dVal += ' Z'
                             return dVal;
                         })
-                        .attr('fill', 'none')
+                        .attr('fill', '#ffffff')
                         .attr('stroke-width', 0.6)
                         // .attr('stroke', this.defaultColours.borderColor)
 						.attr('stroke', secStrData.color)
@@ -1171,7 +1174,7 @@ class PdbTopologyViewerPlugin {
                         //for coils
                         if(secStrType === 'coils'){
                             //create subsections/paths
-                            this.drawCoilsSubpaths(secStrData.start, secStrData.stop, secStrDataIndex);
+                            this.drawCoilsSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, secStrData.color);
                         }
                     
                         this.scaledPointsArr = []; //empty the arr for next iteration
