@@ -205,7 +205,8 @@ class PdbTopologyViewerPlugin {
     
     defaultColours = {
         domainSelection: 'rgb(255,0,0)',
-        mouseOver: 'rgb(105,105,105)',
+        mouseOver: 'rgb(211,211,211)',
+		// mouseOver: 'rgb(105,105,105)',
 		//mouseOver: 'rgb(255,0,0)',
         borderColor: 'rgb(0,0,0)',
         qualityGreen: 'rgb(0,182.85714285714286,0)',
@@ -485,7 +486,8 @@ class PdbTopologyViewerPlugin {
         .attr('stroke', '#111')
         .attr('stroke-width', '0')
         .attr('fill', 'white')
-        .attr('fill-opacity','0')
+		.attr('fill-opacity','1.0')
+        // .attr('fill-opacity','0')
         .on('mouseover', function(d:any){ _this.mouseoverAction(this, d); })
         .on('mousemove', function(d:any){ _this.mouseoverAction(this, d); })
         .on('mouseout', function(d:any){ _this.mouseoutAction(this, d); })
@@ -602,7 +604,9 @@ class PdbTopologyViewerPlugin {
         
         //Highlight Residue
         if(eleData.type === 'strands' || eleData.type === 'helices'){
-            selectedPath.attr('fill', this.defaultColours.mouseOver).attr('fill-opacity','0.3')
+			// Checking out if opacity 1.0 will help to hide coils under strands/helices
+            // selectedPath.attr('fill', this.defaultColours.mouseOver).attr('fill-opacity','0.3')
+			selectedPath.attr('fill', this.defaultColours.mouseOver).attr('fill-opacity','1.0')
         }if(eleData.type === 'coils'){
             selectedPath.attr('stroke', this.defaultColours.mouseOver).attr('stroke-width', 1);
         }
@@ -619,7 +623,8 @@ class PdbTopologyViewerPlugin {
     }
     mouseoutAction(eleObj:any, eleData:any) {
         let mouseOverColor = 'white';
-        let fillOpacity = 0;
+        // let fillOpacity = 0;
+		let fillOpacity = 1.0;
         let strokeOpacity = 0.3;
         const pathElement = d3.select(eleObj);
         
@@ -748,7 +753,8 @@ class PdbTopologyViewerPlugin {
         .attr('stroke', '#111')
         .attr('stroke-width', '0')
         .attr('fill', 'white')
-        .attr('fill-opacity','0')
+        // .attr('fill-opacity','0')
+		.attr('fill-opacity','1.0')
         .on('mouseover', function(d:any){ _this.mouseoverAction(this, d); })
         .on('mousemove', function(d:any){ _this.mouseoverAction(this, d); })
         .on('mouseout', function(d:any){ _this.mouseoutAction(this, d); })
