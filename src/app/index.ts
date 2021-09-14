@@ -1121,7 +1121,9 @@ class PdbTopologyViewerPlugin {
                             if(secStrType === 'strands' || secStrType === 'helices') dVal += ' Z'
                             return dVal;
                         })
-                        .attr('fill', '#ffffff')
+						// This leads to unability to highlight residues on strands/helices onhover
+                        // .attr('fill', '#ffffff')
+						.attr('fill', 'none')
                         .attr('stroke-width', 0.6)
                         // .attr('stroke', this.defaultColours.borderColor)
 						.attr('stroke', secStrData.color)
