@@ -926,7 +926,9 @@ class PdbTopologyViewerPlugin {
                 .on("click", function(d:any) { _this.clickAction(d); })
             
             //Hide the main coil path
-            this.svgEle.selectAll('.coils'+index).attr('stroke-opacity',0);
+            this.svgEle.selectAll('.coils'+index).attr('stroke-opacity',0)
+				// To make coils subpathes hoverable, otherwise coils topoEles are on the top and higher in the DOM
+				.lower();
         }
         
         const termsData = this.apiData[2][this.entryId][this.entityId][this.chainId].terms;
