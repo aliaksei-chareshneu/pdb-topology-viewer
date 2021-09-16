@@ -917,6 +917,9 @@ class PdbTopologyViewerPlugin {
                 .attr('stroke-width', 0.3)
                 .attr('fill', 'none')
                 .attr('stroke-opacity','1')
+				// hides coils behind strands/helices by moving their subpathes to the top of the dom making them first childs of svg element
+				// coils topoEles are already hidden by existing code of TopologyComponent
+				.lower()
                 .on('mouseover', function(d:any){ _this.mouseoverAction(this, d); })
                 .on('mousemove', function(d:any){ _this.mouseoverAction(this, d); })
                 .on('mouseout', function(d:any){ _this.mouseoutAction(this, d); })
