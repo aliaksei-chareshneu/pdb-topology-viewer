@@ -61,7 +61,7 @@ declare class PdbTopologyViewerPlugin {
     mouseoutAction(eleObj: any, eleData: any): void;
     drawHelicesSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number, curveYdiff: number): void;
     drawHelicesMaskShape(index: number): void;
-    drawCoilsSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number): void;
+    drawCoilsSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number, color: string): void;
     drawTopologyStructures(): void;
     zoomDraw(): void;
     clearHighlight(): void;

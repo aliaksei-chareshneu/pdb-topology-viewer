@@ -205,7 +205,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
             'stop': sseAfter.start - 1,
             'path': undefined,
             // TODO: figure out how to determine the color
-            'color': undefined,
+            'color': sseAfter.color,
         };
         var coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
         console.log(coilStartPoint);
@@ -228,7 +228,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
     function PdbTopologyViewerPlugin() {
         this.defaultColours = {
             domainSelection: 'rgb(255,0,0)',
-            mouseOver: 'rgb(105,105,105)',
+            mouseOver: 'rgb(211,211,211)',
+            // mouseOver: 'rgb(105,105,105)',
             //mouseOver: 'rgb(255,0,0)',
             borderColor: 'rgb(0,0,0)',
             qualityGreen: 'rgb(0,182.85714285714286,0)',
@@ -545,7 +546,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             .attr('stroke', '#111')
             .attr('stroke-width', '0')
             .attr('fill', 'white')
-            .attr('fill-opacity', '0')
+            .attr('fill-opacity', '1.0')
+            // .attr('fill-opacity','0')
             .on('mouseover', function (d) { _this.mouseoverAction(this, d); })
             .on('mousemove', function (d) { _this.mouseoverAction(this, d); })
             .on('mouseout', function (d) { _this.mouseoutAction(this, d); })
@@ -645,7 +647,9 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         this.renderTooltip(eleData, 'show');
         //Highlight Residue
         if (eleData.type === 'strands' || eleData.type === 'helices') {
-            selectedPath.attr('fill', this.defaultColours.mouseOver).attr('fill-opacity', '0.3');
+            // Checking out if opacity 1.0 will help to hide coils under strands/helices
+            // selectedPath.attr('fill', this.defaultColours.mouseOver).attr('fill-opacity','0.3')
+            selectedPath.attr('fill', this.defaultColours.mouseOver).attr('fill-opacity', '1.0');
         }
         if (eleData.type === 'coils') {
             selectedPath.attr('stroke', this.defaultColours.mouseOver).attr('stroke-width', 1);
@@ -661,7 +665,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
     };
     PdbTopologyViewerPlugin.prototype.mouseoutAction = function (eleObj, eleData) {
         var mouseOverColor = 'white';
-        var fillOpacity = 0;
+        // let fillOpacity = 0;
+        var fillOpacity = 1.0;
         var strokeOpacity = 0.3;
         var pathElement = d3.select(eleObj);
         //Hide Tooltip
@@ -790,7 +795,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             .attr('stroke', '#111')
             .attr('stroke-width', '0')
             .attr('fill', 'white')
-            .attr('fill-opacity', '0')
+            // .attr('fill-opacity','0')
+            .attr('fill-opacity', '1.0')
             .on('mouseover', function (d) { _this.mouseoverAction(this, d); })
             .on('mousemove', function (d) { _this.mouseoverAction(this, d); })
             .on('mouseout', function (d) { _this.mouseoutAction(this, d); })
@@ -844,7 +850,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             .attr('fill', 'white')
             .attr('stroke-opacity', 0);
     };
-    PdbTopologyViewerPlugin.prototype.drawCoilsSubpaths = function (startResidueNumber, stopResidueNumber, index) {
+    PdbTopologyViewerPlugin.prototype.drawCoilsSubpaths = function (startResidueNumber, stopResidueNumber, index, color) {
         var _this = this;
         // Selects specific coil
         var coilEle = this.svgEle.select('.coils' + index);
@@ -865,7 +871,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 residue_number: startResidueNumber,
                 type: 'coils',
                 pathData: _this.scaledPointsArr,
-                elementIndex: index
+                elementIndex: index,
+                color: color,
             };
             subPathCordsArr.push(newSubPathCords);
         }
@@ -883,7 +890,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 newSubPathCords = {
                     residue_number: startResidueNumber + subPathIndex,
                     type: 'coils',
-                    elementIndex: index
+                    elementIndex: index,
+                    color: color,
                 };
                 // As in our case it is 1, this if is used always => outputs arr with first two elements of scaledPointsArr
                 // Let's turn it off (set cordArrPosition to 0 above) as in our case its always 1 and we want to draw subpaths even in that case
@@ -928,16 +936,22 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 .append('path')
                 .attr('class', function (d) { return 'coilsSubPath subpath-coils' + index + ' topo_res_' + d.residue_number; })
                 .attr('d', function (d) { return 'M ' + d.pathData.join(' '); })
-                .attr('stroke', this.defaultColours.borderColor)
+                // .attr('stroke', this.defaultColours.borderColor)
+                .attr('stroke', function (d) { return d.color; })
                 .attr('stroke-width', 0.3)
                 .attr('fill', 'none')
                 .attr('stroke-opacity', '1')
+                // hides coils behind strands/helices by moving their subpathes to the top of the dom making them first childs of svg element
+                // coils topoEles are already hidden by existing code of TopologyComponent
+                .lower()
                 .on('mouseover', function (d) { _this.mouseoverAction(this, d); })
                 .on('mousemove', function (d) { _this.mouseoverAction(this, d); })
                 .on('mouseout', function (d) { _this.mouseoutAction(this, d); })
                 .on("click", function (d) { _this.clickAction(d); });
             //Hide the main coil path
-            this.svgEle.selectAll('.coils' + index).attr('stroke-opacity', 0);
+            this.svgEle.selectAll('.coils' + index).attr('stroke-opacity', 0)
+                // To make coils subpathes hoverable, otherwise coils topoEles are on the top and higher in the DOM
+                .lower();
         }
         var termsData = this.apiData[2][this.entryId][this.entityId][this.chainId].terms;
         var totalCoilsInStr = this.apiData[2][this.entryId][this.entityId][this.chainId].coils.length;
@@ -1121,6 +1135,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                                 dVal += ' Z';
                             return dVal;
                         })
+                            // This leads to unability to highlight residues on strands/helices onhover
+                            // .attr('fill', '#ffffff')
                             .attr('fill', 'none')
                             .attr('stroke-width', 0.6)
                             // .attr('stroke', this.defaultColours.borderColor)
@@ -1161,7 +1177,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                         //for coils
                         if (secStrType === 'coils') {
                             //create subsections/paths
-                            _this_1.drawCoilsSubpaths(secStrData.start, secStrData.stop, secStrDataIndex);
+                            _this_1.drawCoilsSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, secStrData.color);
                         }
                         _this_1.scaledPointsArr = []; //empty the arr for next iteration
                     }
