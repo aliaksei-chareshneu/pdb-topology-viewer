@@ -672,14 +672,16 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         //Hide Tooltip
         this.renderTooltip('', 'hide');
         //if path colour is changed then get the colour
-        if (pathElement.classed('coloured')) {
+        if (pathElement.classed('coloured') && eleData.type !== 'coils') {
             mouseOverColor = pathElement.attr('data-color');
             fillOpacity = 1;
             strokeOpacity = 1;
         }
         else {
             if (eleData.type === 'coils') {
-                mouseOverColor = this.defaultColours.borderColor;
+                // mouseOverColor = this.defaultColours.borderColor;
+                // adding new data-color-coil attribute to fix a bug where coils become black after mouseout event
+                mouseOverColor = pathElement.attr('data-color-coil');
             }
         }
         if (eleData.type === 'strands' || eleData.type === 'helices') {
@@ -935,6 +937,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 .enter()
                 .append('path')
                 .attr('class', function (d) { return 'coilsSubPath subpath-coils' + index + ' topo_res_' + d.residue_number; })
+                // adding new data-color-coil attribute to fix a bug where coils become black after mouseout event
+                .attr('data-color-coil', function (d) { return d.color; })
                 .attr('d', function (d) { return 'M ' + d.pathData.join(' '); })
                 // .attr('stroke', this.defaultColours.borderColor)
                 .attr('stroke', function (d) { return d.color; })
