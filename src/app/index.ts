@@ -485,7 +485,7 @@ class PdbTopologyViewerPlugin {
         .attr('d', (d:any,i:number) => { return 'M '+d.pathData.join(' ')+' Z' })
         .attr('stroke', '#111')
         .attr('stroke-width', '0')
-        .attr('fill', 'white')
+        .attr('fill', 'none')
 		.attr('fill-opacity','1.0')
         // .attr('fill-opacity','0')
         .on('mouseover', function(d:any){ _this.mouseoverAction(this, d); })
@@ -539,7 +539,7 @@ class PdbTopologyViewerPlugin {
         .attr('d', (d:any,i:number) => { return 'M'+maskPointsArr.join(' ')+'Z' })
         .attr('stroke', '#111')
         .attr('stroke-width', 0.3)
-        .attr('fill', 'white')
+        .attr('fill', 'none')
         .attr('stroke-opacity', 0)
         
     }
@@ -754,7 +754,7 @@ class PdbTopologyViewerPlugin {
         .attr('d', function(d:any){ return 'M'+d.pathData.join(' ')+' Z' })
         .attr('stroke', '#111')
         .attr('stroke-width', '0')
-        .attr('fill', 'white')
+        .attr('fill', 'none')
         // .attr('fill-opacity','0')
 		.attr('fill-opacity','1.0')
         .on('mouseover', function(d:any){ _this.mouseoverAction(this, d); })
@@ -810,7 +810,7 @@ class PdbTopologyViewerPlugin {
         })
         .attr('stroke', '#111')
         .attr('stroke-width', 0.3)
-        .attr('fill', 'white')
+        .attr('fill', 'none')
         .attr('stroke-opacity', 0)
         
     }
@@ -921,6 +921,7 @@ class PdbTopologyViewerPlugin {
                 .attr('stroke-width', 0.3)
                 .attr('fill', 'none')
                 .attr('stroke-opacity','1')
+				.attr('mask', 'url(#cutoutCoilsMask)')
 				// hides coils behind strands/helices by moving their subpathes to the top of the dom making them first childs of svg element
 				// coils topoEles are already hidden by existing code of TopologyComponent
 				.lower()
@@ -1011,7 +1012,20 @@ class PdbTopologyViewerPlugin {
         //Set svg dimensions
         const svgHt = svgSectionHt - 20;
         const svgWt = svgSectionWt - 5;
-        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;"></svg>`;
+		// Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
+		// Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
+        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;">
+			<defs>
+				<mask id="cutoutCoilsMask">
+					<rect
+						x="0"
+						y="0"
+						width="100"
+						height="100"
+						fill="white" />
+				</mask>
+			</defs>
+		</svg>`;
 
         this.svgEle = d3.select(this.targetEle).select('.topoSvg');
        
@@ -1142,7 +1156,14 @@ class PdbTopologyViewerPlugin {
                         .attr('stroke-width', 0.6)
                         // .attr('stroke', this.defaultColours.borderColor)
 						.attr('stroke', secStrData.color)
-                    
+						
+						// Copying and inserting the copy of topoEle to mask to cutout the coils in regions where they overlap, and setting fill to black
+						// so that it will be cut out (with white it will be left visible)
+						const copy = newEle.clone(true).attr('fill', 'black');
+						const mask = d3.select("#cutoutCoilsMask");
+						// or copy.node()
+						mask.append(() => copy.node());
+						
                         if(secStrData.start === -1 && secStrData.stop === -1){
                             newEle.attr('stroke-dasharray', '0.9')
                         }
