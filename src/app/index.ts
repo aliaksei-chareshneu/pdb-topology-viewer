@@ -1130,7 +1130,7 @@ class PdbTopologyViewerPlugin {
 		// Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
         svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;">
 			<defs>
-				<mask id="cutoutCoilsMask">
+				<mask id="cutoutCoilsMask" maskUnits="userSpaceOnUse">
 					<rect
 						x="0"
 						y="0"
@@ -1275,7 +1275,7 @@ class PdbTopologyViewerPlugin {
 						
 						// Copying and inserting the copy of topoEle to mask to cutout the coils in regions where they overlap, and setting fill to black
 						// so that it will be cut out (with white it will be left visible)
-						const copy = newEle.clone(true).attr('fill', 'black');
+						const copy = newEle.clone(true).attr('fill', 'black').attr('stroke-width', 0);
 						const mask = d3.select("#cutoutCoilsMask");
 						// or copy.node()
 						mask.append(() => copy.node());

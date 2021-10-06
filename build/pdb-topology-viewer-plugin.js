@@ -1115,7 +1115,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         var svgWt = svgSectionWt - 5;
         // Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
         // Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
-        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\">\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\">\n\t\t\t\t\t<rect\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
+        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\">\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"userSpaceOnUse\">\n\t\t\t\t\t<rect\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
         this.svgEle = d3.select(this.targetEle).select('.topoSvg');
         this.getDomainRange();
         this.scaledPointsArr = [];
@@ -1244,7 +1244,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             .attr('id', secStrData.twoDProtsSSEId);
                         // Copying and inserting the copy of topoEle to mask to cutout the coils in regions where they overlap, and setting fill to black
                         // so that it will be cut out (with white it will be left visible)
-                        var copy_1 = newEle.clone(true).attr('fill', 'black');
+                        var copy_1 = newEle.clone(true).attr('fill', 'black').attr('stroke-width', 0);
                         var mask = d3.select("#cutoutCoilsMask");
                         // or copy.node()
                         mask.append(function () { return copy_1.node(); });
