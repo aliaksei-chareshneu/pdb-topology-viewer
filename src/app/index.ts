@@ -363,6 +363,8 @@ class PdbTopologyViewerPlugin {
                 this.getPDBSequenceArray(this.apiData[0][this.entryId]);
                 this.drawTopologyStructures();
 				this.drawConnectingCoils();
+				// To hide endings of connecting coils lying above topoEles	
+				d3.selectAll('.topologyEle').clone(true).raise();
                 this.createDomainDropdown();
 
                 if(this.subscribeEvents) this.subscribeWcEvents();
@@ -1268,7 +1270,7 @@ class PdbTopologyViewerPlugin {
 						// This leads to unability to highlight residues on strands/helices onhover
                         // .attr('fill', '#ffffff')
 						.attr('fill', 'none')
-                        .attr('stroke-width', 0.6)
+                        .attr('stroke-width', 1.0)
                         // .attr('stroke', this.defaultColours.borderColor)
 						.attr('stroke', secStrData.color)
 						// set id to later draw connecting coils
