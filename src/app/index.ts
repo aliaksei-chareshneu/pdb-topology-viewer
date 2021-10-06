@@ -10,6 +10,50 @@ SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformTo
 
 };
 
+// Function that takes d3 selection and returns 'startCoord' and 'stopCoord' depending on SSE type (helix/sheet)
+// Used to draw connecting coils
+function getStartStopCoords(d3selection) {
+	const dAttrContent = d3selection.node().pathSegList._list;
+	const totalPathLength = d3selection.node().getTotalLength();
+	
+	const coords = {
+		'startCoords': {
+			'x': undefined,
+			'y': undefined,
+		},
+		'stopCoords': {
+			'x': undefined,
+			'y': undefined,
+		}
+	};
+	
+	if (d3selection.classed('helices')) {
+		// length of longer part of capsule-like structure
+		const vertLt = Math.hypot(Math.abs(dAttrContent[1].x - dAttrContent[2].x), Math.abs(dAttrContent[1].y - dAttrContent[2].y));
+		// length of curved part of capsule-like structure
+		const curveLt = (totalPathLength - (2 * vertLt))/2;
+		const stopSVGPoint = d3selection.node().getPointAtLength(curveLt/2);
+		const startSVGPoint = d3selection.node().getPointAtLength(curveLt*1.5 + vertLt);
+		
+		coords.stopCoords.x = stopSVGPoint.x;
+		coords.stopCoords.y = stopSVGPoint.y;
+		
+		coords.startCoords.x = startSVGPoint.x;
+		coords.startCoords.y = startSVGPoint.y;
+	} else if (d3selection.classed('strands')) {
+		// here startCoord is based on 'average' of two points [0,1] and [12,13]
+		const p1 = dAttrContent[0];
+		const p2 = dAttrContent[6];
+		
+		coords.startCoords.x = (p1._x + p2._x)/2;
+		coords.startCoords.y = (p1._y + p2._y)/2;
+		coords.stopCoords.x = dAttrContent[3]._x;
+		coords.stopCoords.y = dAttrContent[3]._y;
+	}
+	
+	return coords;
+};
+
 // Test function for usage in browser console: returns new coordinates of a point in a path after applying transform
 function getPathPointAfterTransform(xcoord, ycoord, pathEle) {
 	const pathDOM = pathEle;
@@ -1022,22 +1066,31 @@ class PdbTopologyViewerPlugin {
 				continue;
 			}
 			
-			const sseBeforeEle = d3.select(`#${sseBefore.twoDProtsSSEId}`).node()
-			const sseAfterEle = d3.select(`#${sseAfter.twoDProtsSSEId}`).node()
+			const sseBeforeEle = d3.select(`#${sseBefore.twoDProtsSSEId}`)
+			const sseAfterEle = d3.select(`#${sseAfter.twoDProtsSSEId}`)
+			const sseBeforeStartStopCoords = getStartStopCoords(sseBeforeEle)
+			const sseAfterStartStopCoords = getStartStopCoords(sseAfterEle)
 			
-			const coilStartPoint = getPathPointAfterTransform(sseBefore.stopCoord.x, sseBefore.stopCoord.y, sseBeforeEle)
-			const coilStopPoint = getPathPointAfterTransform(sseAfter.startCoord.x, sseAfter.startCoord.y, sseAfterEle)
+			const coilStartPoint = getPathPointAfterTransform(
+				sseBeforeStartStopCoords.stopCoords.x,
+				sseBeforeStartStopCoords.stopCoords.y,
+				sseBeforeEle.node())
+			const coilStopPoint = getPathPointAfterTransform(
+				sseAfterStartStopCoords.startCoords.x,
+				sseAfterStartStopCoords.startCoords.y,
+				sseAfterEle.node())
 			
 			// TODO: check if svg can be selected in a better way
 			const connectingCoil = d3.select('svg.topoSvg')
 			.append('line')
-			.attr('x1', this.xScale(coilStartPoint.x))
-			.attr('y1', this.yScale(coilStartPoint.y))
-			.attr('x2', this.xScale(coilStopPoint.x))
-			.attr('y2', this.yScale(coilStopPoint.y))
+			.attr('x1', coilStartPoint.x)
+			.attr('y1', coilStartPoint.y)
+			.attr('x2', coilStopPoint.x)
+			.attr('y2', coilStopPoint.y)
 			.attr('stroke', sseAfter.color)
 			.attr('stroke-width', 0.3)
 			.attr('id', `${sseBefore.twoDProtsSSEId}_${sseAfter.twoDProtsSSEId}`)
+			.attr('mask', 'url(#cutoutCoilsMask)')
 		}
 	}
 	

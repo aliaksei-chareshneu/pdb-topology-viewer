@@ -1,3 +1,17 @@
+declare function getStartStopCoords(d3selection: any): {
+    startCoords: {
+        x: undefined;
+        y: undefined;
+    };
+    stopCoords: {
+        x: undefined;
+        y: undefined;
+    };
+};
+declare function getPathPointAfterTransform(xcoord: any, ycoord: any, pathEle: any): {
+    x: any;
+    y: any;
+};
 declare function applyRotationMatrix(point: any, center: any, angle: any): {
     x: any;
     y: any;
@@ -62,6 +76,7 @@ declare class PdbTopologyViewerPlugin {
     drawHelicesSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number, curveYdiff: number): void;
     drawHelicesMaskShape(index: number): void;
     drawCoilsSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number, color: string): void;
+    drawConnectingCoils(): void;
     drawTopologyStructures(): void;
     zoomDraw(): void;
     clearHighlight(): void;

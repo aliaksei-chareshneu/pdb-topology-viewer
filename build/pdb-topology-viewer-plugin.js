@@ -46,6 +46,66 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 // No, it does not need for us - as we do it as straight lines. Just separate them on clickable elements
 // TODO: drawing of helices and strands can be done via rotation matrix as well. Maybe it can help to solve precision location issues (coils vs everything else)
 // TODO: residue numbering in subpath of some helices seem to be wrong. Angle problems? +/-
+// Polyfill for getTransformToElement
+SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function (toElement) {
+    return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
+};
+// Function that takes d3 selection and returns 'startCoord' and 'stopCoord' depending on SSE type (helix/sheet)
+// Used to draw connecting coils
+function getStartStopCoords(d3selection) {
+    var dAttrContent = d3selection.node().pathSegList._list;
+    var totalPathLength = d3selection.node().getTotalLength();
+    var coords = {
+        'startCoords': {
+            'x': undefined,
+            'y': undefined,
+        },
+        'stopCoords': {
+            'x': undefined,
+            'y': undefined,
+        }
+    };
+    if (d3selection.classed('helices')) {
+        // length of longer part of capsule-like structure
+        var vertLt = Math.hypot(Math.abs(dAttrContent[1].x - dAttrContent[2].x), Math.abs(dAttrContent[1].y - dAttrContent[2].y));
+        // length of curved part of capsule-like structure
+        var curveLt = (totalPathLength - (2 * vertLt)) / 2;
+        var stopSVGPoint = d3selection.node().getPointAtLength(curveLt / 2);
+        var startSVGPoint = d3selection.node().getPointAtLength(curveLt * 1.5 + vertLt);
+        coords.stopCoords.x = stopSVGPoint.x;
+        coords.stopCoords.y = stopSVGPoint.y;
+        coords.startCoords.x = startSVGPoint.x;
+        coords.startCoords.y = startSVGPoint.y;
+    }
+    else if (d3selection.classed('strands')) {
+        // here startCoord is based on 'average' of two points [0,1] and [12,13]
+        var p1 = dAttrContent[0];
+        var p2 = dAttrContent[6];
+        coords.startCoords.x = (p1._x + p2._x) / 2;
+        coords.startCoords.y = (p1._y + p2._y) / 2;
+        coords.stopCoords.x = dAttrContent[3]._x;
+        coords.stopCoords.y = dAttrContent[3]._y;
+    }
+    return coords;
+}
+;
+// Test function for usage in browser console: returns new coordinates of a point in a path after applying transform
+function getPathPointAfterTransform(xcoord, ycoord, pathEle) {
+    var pathDOM = pathEle;
+    var svgDOM = d3.select('.topoSvg').node();
+    var matrix = pathDOM.getTransformToElement(svgDOM);
+    var pt = svgDOM.createSVGPoint();
+    pt.x = xcoord;
+    pt.y = ycoord;
+    var new_point = pt.matrixTransform(matrix); // <- matrix object, which we created earlier
+    var new_x = new_point.x;
+    var new_y = new_point.y;
+    var newPoint = {
+        'x': new_x,
+        'y': new_y,
+    };
+    return newPoint;
+}
 // Applies rotation matrix to a point (used to calculate path for coils)
 function applyRotationMatrix(point, center, angle) {
     var angleCCW = 360 - angle;
@@ -160,7 +220,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
             'center': centerYReversed,
             'color': sse[1].color,
             'angle': sse[1].angles,
-            '2dprotsSSEId': sse[0],
+            'twoDProtsSSEId': sse[0],
             'path': undefined,
             // data for drawing coils between helices and/or strands
             'startCoord': { 'x': undefined, 'y': undefined },
@@ -220,7 +280,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
             coilStopPoint.y,
         ];
         // Coils are disabled for now - need to fix their positioning and residue content
-        outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
+        // outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
     }
     return outputJSON;
 }
@@ -377,6 +437,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 _this_1.pdbevents = _this_1.createNewEvent(['PDB.topologyViewer.click', 'PDB.topologyViewer.mouseover', 'PDB.topologyViewer.mouseout']);
                 _this_1.getPDBSequenceArray(_this_1.apiData[0][_this_1.entryId]);
                 _this_1.drawTopologyStructures();
+                _this_1.drawConnectingCoils();
                 _this_1.createDomainDropdown();
                 if (_this_1.subscribeEvents)
                     _this_1.subscribeWcEvents();
@@ -546,8 +607,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             .attr('stroke', '#111')
             .attr('stroke-width', '0')
             .attr('fill', 'white')
-            .attr('fill-opacity', '1.0')
-            // .attr('fill-opacity','0')
+            // .attr('fill-opacity','1.0')
+            .attr('fill-opacity', '0')
             .on('mouseover', function (d) { _this.mouseoverAction(this, d); })
             .on('mousemove', function (d) { _this.mouseoverAction(this, d); })
             .on('mouseout', function (d) { _this.mouseoutAction(this, d); })
@@ -665,8 +726,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
     };
     PdbTopologyViewerPlugin.prototype.mouseoutAction = function (eleObj, eleData) {
         var mouseOverColor = 'white';
-        // let fillOpacity = 0;
-        var fillOpacity = 1.0;
+        var fillOpacity = 0;
+        // let fillOpacity = 1.0;
         var strokeOpacity = 0.3;
         var pathElement = d3.select(eleObj);
         //Hide Tooltip
@@ -797,8 +858,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             .attr('stroke', '#111')
             .attr('stroke-width', '0')
             .attr('fill', 'white')
-            // .attr('fill-opacity','0')
-            .attr('fill-opacity', '1.0')
+            .attr('fill-opacity', '0')
+            // .attr('fill-opacity','1.0')
             .on('mouseover', function (d) { _this.mouseoverAction(this, d); })
             .on('mousemove', function (d) { _this.mouseoverAction(this, d); })
             .on('mouseout', function (d) { _this.mouseoutAction(this, d); })
@@ -945,17 +1006,18 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 .attr('stroke-width', 0.3)
                 .attr('fill', 'none')
                 .attr('stroke-opacity', '1')
-                // hides coils behind strands/helices by moving their subpathes to the top of the dom making them first childs of svg element
-                // coils topoEles are already hidden by existing code of TopologyComponent
-                .lower()
+                .attr('mask', 'url(#cutoutCoilsMask)')
+                // raise coils above everything to fix blank spaces aroustrands
+                // but it will work only if we do it after all SSEs are drown: d3.selectAll('.coilsSubPath').raise()
+                // .raise()
                 .on('mouseover', function (d) { _this.mouseoverAction(this, d); })
                 .on('mousemove', function (d) { _this.mouseoverAction(this, d); })
                 .on('mouseout', function (d) { _this.mouseoutAction(this, d); })
                 .on("click", function (d) { _this.clickAction(d); });
             //Hide the main coil path
-            this.svgEle.selectAll('.coils' + index).attr('stroke-opacity', 0)
-                // To make coils subpathes hoverable, otherwise coils topoEles are on the top and higher in the DOM
-                .lower();
+            this.svgEle.selectAll('.coils' + index).attr('stroke-opacity', 0);
+            // To make coils subpathes hoverable, otherwise coils topoEles are on the top and higher in the DOM
+            // .lower();
         }
         var termsData = this.apiData[2][this.entryId][this.entityId][this.chainId].terms;
         var totalCoilsInStr = this.apiData[2][this.entryId][this.entityId][this.chainId].coils.length;
@@ -999,6 +1061,37 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         // .attr('style',"-webkit-tap-highlight-color: rgba(0, 0, 0, 0); text-anchor: middle; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; line-height: normal; font-family: Arial;")
         // }
     };
+    PdbTopologyViewerPlugin.prototype.drawConnectingCoils = function () {
+        var topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
+        var helicesAndSheets = __spreadArrays(topologyData.helices, topologyData.strands);
+        helicesAndSheets.sort(function (a, b) { return a.stop < b.start ? -1 : 1; });
+        console.log("Sorted helicesAndSheets array");
+        console.log(helicesAndSheets);
+        for (var i = 1; i < helicesAndSheets.length; i++) {
+            var sseBefore = helicesAndSheets[i - 1];
+            var sseAfter = helicesAndSheets[i];
+            if (sseBefore.stop + 1 === sseAfter.start) {
+                continue;
+            }
+            var sseBeforeEle = d3.select("#" + sseBefore.twoDProtsSSEId);
+            var sseAfterEle = d3.select("#" + sseAfter.twoDProtsSSEId);
+            var sseBeforeStartStopCoords = getStartStopCoords(sseBeforeEle);
+            var sseAfterStartStopCoords = getStartStopCoords(sseAfterEle);
+            var coilStartPoint = getPathPointAfterTransform(sseBeforeStartStopCoords.stopCoords.x, sseBeforeStartStopCoords.stopCoords.y, sseBeforeEle.node());
+            var coilStopPoint = getPathPointAfterTransform(sseAfterStartStopCoords.startCoords.x, sseAfterStartStopCoords.startCoords.y, sseAfterEle.node());
+            // TODO: check if svg can be selected in a better way
+            var connectingCoil = d3.select('svg.topoSvg')
+                .append('line')
+                .attr('x1', coilStartPoint.x)
+                .attr('y1', coilStartPoint.y)
+                .attr('x2', coilStopPoint.x)
+                .attr('y2', coilStopPoint.y)
+                .attr('stroke', sseAfter.color)
+                .attr('stroke-width', 0.3)
+                .attr('id', sseBefore.twoDProtsSSEId + "_" + sseAfter.twoDProtsSSEId)
+                .attr('mask', 'url(#cutoutCoilsMask)');
+        }
+    };
     PdbTopologyViewerPlugin.prototype.drawTopologyStructures = function () {
         var _this_1 = this;
         //Add container elements
@@ -1020,7 +1113,9 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         //Set svg dimensions
         var svgHt = svgSectionHt - 20;
         var svgWt = svgSectionWt - 5;
-        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\"></svg>";
+        // Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
+        // Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
+        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\">\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\">\n\t\t\t\t\t<rect\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
         this.svgEle = d3.select(this.targetEle).select('.topoSvg');
         this.getDomainRange();
         this.scaledPointsArr = [];
@@ -1144,7 +1239,15 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             .attr('fill', 'none')
                             .attr('stroke-width', 0.6)
                             // .attr('stroke', this.defaultColours.borderColor)
-                            .attr('stroke', secStrData.color);
+                            .attr('stroke', secStrData.color)
+                            // set id to later draw connecting coils
+                            .attr('id', secStrData.twoDProtsSSEId);
+                        // Copying and inserting the copy of topoEle to mask to cutout the coils in regions where they overlap, and setting fill to black
+                        // so that it will be cut out (with white it will be left visible)
+                        var copy_1 = newEle.clone(true).attr('fill', 'black');
+                        var mask = d3.select("#cutoutCoilsMask");
+                        // or copy.node()
+                        mask.append(function () { return copy_1.node(); });
                         if (secStrData.start === -1 && secStrData.stop === -1) {
                             newEle.attr('stroke-dasharray', '0.9');
                         }
