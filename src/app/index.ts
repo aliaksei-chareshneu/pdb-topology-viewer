@@ -304,7 +304,8 @@ class PdbTopologyViewerPlugin {
     scaledPointsArr: any[];
     domainTypes: any[];
 
-    svgWidth = 100;
+    // svgWidth = 100;
+	svgWidth = 128;
     svgHeight = 100;
 
     svgEle: any;
@@ -1128,13 +1129,13 @@ class PdbTopologyViewerPlugin {
         const svgWt = svgSectionWt - 5;
 		// Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
 		// Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
-        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;">
+        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 128 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;">
 			<defs>
 				<mask id="cutoutCoilsMask" maskUnits="userSpaceOnUse">
 					<rect
 						x="0"
 						y="0"
-						width="100"
+						width="128"
 						height="100"
 						fill="white" />
 				</mask>
