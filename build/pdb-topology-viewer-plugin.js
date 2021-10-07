@@ -782,7 +782,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             // In this case it selects TopologyEle (outer helix not divided onto residues)
             var boxHeight = (this.svgEle.select('.helices' + index).node().getBBox().height) + (subPathHeight / 2);
             var singleUnitHt = boxHeight / totalAaInPath;
-            //boxHeight = boxHeight - singleUnitHt; //height correction
+            boxHeight = boxHeight - singleUnitHt / 2; //height correction
             subPathHeight = (boxHeight - singleUnitHt / 2) / totalAaInPath;
             startPoint = (subPathHeight - singleUnitHt / 10);
             if (this.scaledPointsArr[3] > this.scaledPointsArr[9]) {
