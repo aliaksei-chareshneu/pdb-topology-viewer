@@ -1,9 +1,8 @@
-<!DOCTYPE html>
 <html>
 
   <head>
 	<!-- Molstar CSS & JS -->
-    <link rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-1.1.0.css">
+    <link crossorigin="anonymous"rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-1.1.0.css">
     <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-1.1.0.js"></script>
 	
     <!-- d3.js dependency script -->
@@ -14,6 +13,13 @@
 	
 	<!-- math.js -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.3/math.min.js" integrity="sha512-h6sl9arHHMneDTSQwIiJ6NUSx3/wGWKr9P25MQCnwmTsPMBHIscEtk/5k/zA+IOjvGQUuvn2003cRhX2BUpgqw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+	
+	<!-- OverProt CSS and scripts -->
+	<!-- All links are copied from the overprot.ncbr.muni.cz pages -->
+	<link crossorigin="anonymous" rel='stylesheet' type='text/css' href='https://overprot.ncbr.muni.cz/static/overprot-viewer/overprot-viewer.min.css'>
+	<script type='text/javascript' src='https://overprot.ncbr.muni.cz/static/overprot-viewer/d3.v5.min.js'></script>
+	<script type='text/javascript' src='https://overprot.ncbr.muni.cz/static/overprot-viewer/d3-selection-multi.v1.min.js'></script>
+	<script type='text/javascript' src='https://overprot.ncbr.muni.cz/static/overprot-viewer/overprot-viewer.min.js'></script>
 	
     <style>
 		.flex-container {
@@ -33,13 +39,23 @@
 			width: 500px;
 			position: relative;
 		}
+		
+		#overprot-wrapper {
+			<!-- width: 500px; -->
+			<!-- height: 200px; -->
+		}
     </style>
 
   </head>
 
   <body>
-    <h4>Demo (2D and 3D)</h4>
+    <h4>Demo (1D, 2D, and 3D)</h4>
     
+	<div id="overprot-wrapper">
+		<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-2.140.10.30.json'
+		width=1800 height=300 color-method='variability' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%'></overprot-viewer>
+	</div>
+	
     <!-- PDB Topology Viewer container -->
 	<div class="flex-container">
 		<div id="pdb-topology-viewer"></div>
