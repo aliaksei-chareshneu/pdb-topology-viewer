@@ -70,13 +70,19 @@
             <!-- } -->
         <!-- }); -->
         document.addEventListener('PDB.overprot.hover', (event) => {
-            console.log('PDB.overprot.hover', event);
-			<!-- TODO: fix console error - offhover overprot shoots another event with .sses = empty array -->
-			const sseLabel = event.detail.sses[0].label;
-			console.log(sseLabel);
-            <!-- for (const viewer of document.querySelectorAll('overprot-viewer')) { -->
-                <!-- viewer.dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {detail: event.detail})); -->
-            <!-- } -->
+			if (event.detail.sses[0]) {
+				console.log('PDB.overprot.hover', event);
+				<!-- TODO: fix console error - offhover overprot shoots another event with .sses = empty array -->
+				const sseLabel = event.detail.sses[0].label;
+				console.log(sseLabel);
+				<!-- TODO: right now it selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fix by adding classes and to 3 out of 4 of them, adjusting select string here accordingly -->
+				d3.selectAll(`#${sseLabel}.topologyEleTopLayer`).attr('fill', 'rgb(211,211,211)').attr('fill-opacity','1.0')
+			} else {
+				<!-- empty detail.label arr => event was fired onmouseover/offhover --
+				d3.selectAll('.topologyEle.topologyEleTopLayer').attr('fill', 'none')
+			}
+			
+			
         });
 	</script>
 	<!-- PDB Topology component script -->
@@ -107,6 +113,18 @@
 		<!-- console.log(one) -->
 		
 		// ENDOFTESTING
+		
+		<!-- 2D => 1D hover event listener -->
+		<!-- document.addEventListener('PDB.topologyComponent.mouseover', (event) => { -->
+			<!-- document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', { -->
+				<!-- detail: { -->
+							<!-- 'sses': [{'label': 'E16'}] -->
+						<!-- } -->
+					<!-- })); -->
+			<!-- for (const viewer of document.querySelectorAll('overprot-viewer')) { -->
+                <!-- viewer.dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {detail: event.detail})); -->
+            <!-- } -->
+		});
       });
       
     </script>

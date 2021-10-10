@@ -364,7 +364,7 @@ class PdbTopologyViewerPlugin {
                 this.drawTopologyStructures();
 				this.drawConnectingCoils();
 				// To hide endings of connecting coils lying above topoEles	
-				d3.selectAll('.topologyEle').clone(true).raise();
+				d3.selectAll('.topologyEle').clone(true).classed('topologyEleTopLayer', true).raise();
                 this.createDomainDropdown();
 
                 if(this.subscribeEvents) this.subscribeWcEvents();
