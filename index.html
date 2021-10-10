@@ -28,21 +28,21 @@
 		
         #pdb-topology-viewer {
             position: relative;
-            width: calc(500px*1.28);
-            height: 500px;
+            width: calc(400px*1.28);
+            height: 400px;
 			margin-left: 50px;
         }
 		
 		#myViewer{
-			height: 500px;
+			height: 400px;
 			margin-left: 50px;
 			width: 500px;
 			position: relative;
 		}
 		
 		#overprot-wrapper {
-			<!-- width: 500px; -->
-			<!-- height: 200px; -->
+			width: 1000px;
+			height: 200px;
 		}
     </style>
 
@@ -52,8 +52,8 @@
     <h4>Demo (1D, 2D, and 3D)</h4>
     
 	<div id="overprot-wrapper">
-		<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-2.140.10.30.json'
-		width=1800 height=300 color-method='variability' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%'></overprot-viewer>
+		<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-2.160.10.30.json'
+		width=1800 height=300 color-method='variability' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>
 	</div>
 	
     <!-- PDB Topology Viewer container -->
@@ -61,7 +61,24 @@
 		<div id="pdb-topology-viewer"></div>
 		<div id="myViewer"></div>
 	</div>
-	
+	<!-- OverProt script (e.g. events) -->
+	<script>
+		<!-- document.addEventListener('PDB.overprot.select', (event) => { -->
+            <!-- console.log('PDB.overprot.select', event); -->
+            <!-- for (const viewer of document.querySelectorAll('overprot-viewer')) { -->
+                <!-- viewer.dispatchEvent(new CustomEvent('PDB.overprot.do.select', {detail: event.detail})); -->
+            <!-- } -->
+        <!-- }); -->
+        document.addEventListener('PDB.overprot.hover', (event) => {
+            console.log('PDB.overprot.hover', event);
+			<!-- TODO: fix console error - offhover overprot shoots another event with .sses = empty array -->
+			const sseLabel = event.detail.sses[0].label;
+			console.log(sseLabel);
+            <!-- for (const viewer of document.querySelectorAll('overprot-viewer')) { -->
+                <!-- viewer.dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {detail: event.detail})); -->
+            <!-- } -->
+        });
+	</script>
 	<!-- PDB Topology component script -->
     <script>
       document.addEventListener('DOMContentLoaded', () => {
