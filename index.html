@@ -53,7 +53,7 @@
     
 	<div id="overprot-wrapper">
 		<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-2.160.10.30.json'
-		width=1800 height=300 color-method='variability' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>
+		width=1800 height=300 color-method='type' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>
 	</div>
 	
     <!-- PDB Topology Viewer container -->
@@ -73,16 +73,15 @@
 			if (event.detail.sses[0]) {
 				console.log('PDB.overprot.hover', event);
 				<!-- TODO: fix console error - offhover overprot shoots another event with .sses = empty array -->
-				const sseLabel = event.detail.sses[0].label;
-				console.log(sseLabel);
-				<!-- TODO: right now it selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fix by adding classes and to 3 out of 4 of them, adjusting select string here accordingly -->
-				d3.selectAll(`#${sseLabel}.topologyEleTopLayer`).attr('fill', 'rgb(211,211,211)').attr('fill-opacity','1.0')
+				const sses = event.detail.sses;
+				sses.forEach(sse => {
+					<!-- Right now sseLabel selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fixed by adding class to the last one -->
+					d3.selectAll(`#${sse.label}.topologyEleTopLayer`).attr('fill', 'rgb(211,211,211)').attr('fill-opacity','1.0')
+				});
 			} else {
-				<!-- empty detail.label arr => event was fired onmouseover/offhover --
+				<!-- empty detail.label arr => event was fired onmouseover/offhover -->
 				d3.selectAll('.topologyEle.topologyEleTopLayer').attr('fill', 'none')
 			}
-			
-			
         });
 	</script>
 	<!-- PDB Topology component script -->
@@ -115,15 +114,22 @@
 		// ENDOFTESTING
 		
 		<!-- 2D => 1D hover event listener -->
-		<!-- document.addEventListener('PDB.topologyComponent.mouseover', (event) => { -->
-			<!-- document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', { -->
-				<!-- detail: { -->
-							<!-- 'sses': [{'label': 'E16'}] -->
-						<!-- } -->
-					<!-- })); -->
-			<!-- for (const viewer of document.querySelectorAll('overprot-viewer')) { -->
-                <!-- viewer.dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {detail: event.detail})); -->
-            <!-- } -->
+		document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
+			<!-- console.log(event) -->
+			document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
+				detail: {
+							'sses': [{'label': event.eventData.parentSSEId}]
+						}
+					}));
+		});
+		
+		document.addEventListener('PDB.topologyViewer.mouseout', (event) => {
+			<!-- console.log(event) -->
+			document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
+				detail: {
+							'sses': []
+						}
+					}));
 		});
       });
       
@@ -157,11 +163,11 @@
 		});
 		
 		// Upon user hover on Topology Component residue, highlight that residue in MolStar view
-		document.addEventListener('PDB.topologyComponent.mouseover', (event) => {
+		document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
 			viewerInstance.visual.highlight({ data: [{
-				entity_id: event.detail['entityId'],
-				struct_asym_id: event.detail['chainId'],
-				residue_number: event.detail['residue_number'],
+				entity_id: event.eventData['entityId'],
+				struct_asym_id: event.eventData['chainId'],
+				residue_number: event.eventData['residueNumber'],
 			}], color: {r:255,g:0,b:0},});
 		});
 		

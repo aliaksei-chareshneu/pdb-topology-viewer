@@ -514,7 +514,7 @@ class PdbTopologyViewerPlugin {
 
     // TODO: method needs to be modified: subPathHeight assumes that the SVG element is vertical, while in 2DProts it can oriented arbitrarily
     // TODO: very important for any SSE is to be able to get its length to obtain the length of residue subelements
-    drawStrandSubpaths(startResidueNumber:number, stopResidueNumber:number, index:number) {
+    drawStrandSubpaths(startResidueNumber:number, stopResidueNumber:number, index:number, parentSSEId:string) {
         const _this = this;
         const totalAaInPath = (stopResidueNumber - startResidueNumber) + 1
         // height of one subelement
@@ -523,7 +523,7 @@ class PdbTopologyViewerPlugin {
         //create subsections/paths
         let dValArr = [];
         for(let subPathIndex=0; subPathIndex<totalAaInPath; subPathIndex++){
-            let subPathObj:any = {type: 'strands', elementIndex: index};
+            let subPathObj:any = {type: 'strands', elementIndex: index, parentSSEId: parentSSEId};
             if(subPathIndex === 0){
                 subPathObj['residue_number'] = startResidueNumber;
                 subPathObj['pathData'] = [
@@ -693,6 +693,7 @@ class PdbTopologyViewerPlugin {
             entryId: this.entryId,
             entityId: this.entityId,
             chainId: this.chainId,
+			parentSSEId: eleData.parentSSEId,
             // structAsymId: scope.bestStructAsymId
         });
     }
@@ -730,12 +731,13 @@ class PdbTopologyViewerPlugin {
             entryId: this.entryId,
             entityId: this.entityId,
             chainId: this.chainId,
+			parentSSEId: eleData.parentSSEId,
             // structAsymId: scope.bestStructAsymId
         });
     }
 
     // Draws subelements of helices (i.e. residues, that are highlighted on hover)
-    drawHelicesSubpaths(startResidueNumber:number, stopResidueNumber:number, index:number, curveYdiff:number) {
+    drawHelicesSubpaths(startResidueNumber:number, stopResidueNumber:number, index:number, curveYdiff:number, parentSSEId:string) {
         const _this = this;
         curveYdiff = 0;
         const diffVal = 5;
@@ -767,7 +769,7 @@ class PdbTopologyViewerPlugin {
         let subPathObj:any = {};
         if(curveYdiff === 0){
             for(let subPathIndex=0; subPathIndex<totalAaInPath; subPathIndex++){
-                subPathObj = {type: 'helices'};
+                subPathObj = {type: 'helices', parentSSEId: parentSSEId};
                 if(subPathIndex === 0){
                     if(this.scaledPointsArr[3] < this.scaledPointsArr[9]){
                         subPathObj['residue_number'] = stopResidueNumber;
@@ -1293,7 +1295,7 @@ class PdbTopologyViewerPlugin {
 							const yCenterScaled = this.yScale(secStrData.center.y);
 							
                             //create subsections/paths
-                            this.drawStrandSubpaths(secStrData.start, secStrData.stop, secStrDataIndex)
+                            this.drawStrandSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, secStrData.twoDProtsSSEId)
                             
                             //Create mask to restore shape
                             this.drawStrandMaskShape(secStrDataIndex);
@@ -1313,7 +1315,7 @@ class PdbTopologyViewerPlugin {
 							const yCenterScaled = this.yScale(secStrData.center.y);
 							
                             //create subsections/paths
-                            this.drawHelicesSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, curveYdiff)
+                            this.drawHelicesSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, curveYdiff, secStrData.twoDProtsSSEId)
                             
                             //Create mask to restore shape
                             this.drawHelicesMaskShape(secStrDataIndex);
@@ -1341,20 +1343,6 @@ class PdbTopologyViewerPlugin {
             });
             
         };
-        				
-		// Upon user hover on Topology Component residue, highlight that residue in MolStar view 
-        d3.selectAll('path.helicesSubPath, path.strandsSubPath, path.coilsSubPath').on('mouseover', (event) => {
-			// console.log(this); //Element itself
-			// console.log(event); //event with element index, residue_number, path, type (e.g. strand)
-			console.log(event);
-			const data = {
-				'residue_number': event.residue_number,
-				'entityId': this.entityId,
-				'chainId': this.chainId,
-			};
-			const PDBTopologyComponentMouseoverEvent = new CustomEvent('PDB.topologyComponent.mouseover', {'detail': data});
-			document.dispatchEvent(PDBTopologyComponentMouseoverEvent);
-		});
 				
         //bring rsrz validation circles in front
         this.svgEle._groups[0][0].append(this.svgEle.selectAll('.validationResidue').node());

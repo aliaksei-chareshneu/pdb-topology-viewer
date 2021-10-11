@@ -66,14 +66,14 @@ declare class PdbTopologyViewerPlugin {
     getPDBSequenceArray(entities: any[]): void;
     chunkArray(arr: any[], len: number): any[][];
     getDomainRange(): void;
-    drawStrandSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number): void;
+    drawStrandSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number, parentSSEId: string): void;
     drawStrandMaskShape(index: number): void;
     renderTooltip(elementData: any, action: string): void;
     dispatchEvent(eventType: any, eventData: any, eventElement?: HTMLElement): void;
     clickAction(eleObj: any): void;
     mouseoverAction(eleObj: any | this, eleData: any): void;
     mouseoutAction(eleObj: any, eleData: any): void;
-    drawHelicesSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number, curveYdiff: number): void;
+    drawHelicesSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number, curveYdiff: number, parentSSEId: string): void;
     drawHelicesMaskShape(index: number): void;
     drawCoilsSubpaths(startResidueNumber: number, stopResidueNumber: number, index: number, color: string): void;
     drawConnectingCoils(): void;

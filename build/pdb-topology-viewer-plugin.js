@@ -565,7 +565,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
     };
     // TODO: method needs to be modified: subPathHeight assumes that the SVG element is vertical, while in 2DProts it can oriented arbitrarily
     // TODO: very important for any SSE is to be able to get its length to obtain the length of residue subelements
-    PdbTopologyViewerPlugin.prototype.drawStrandSubpaths = function (startResidueNumber, stopResidueNumber, index) {
+    PdbTopologyViewerPlugin.prototype.drawStrandSubpaths = function (startResidueNumber, stopResidueNumber, index, parentSSEId) {
         var _this = this;
         var totalAaInPath = (stopResidueNumber - startResidueNumber) + 1;
         // height of one subelement
@@ -573,7 +573,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         //create subsections/paths
         var dValArr = [];
         for (var subPathIndex = 0; subPathIndex < totalAaInPath; subPathIndex++) {
-            var subPathObj = { type: 'strands', elementIndex: index };
+            var subPathObj = { type: 'strands', elementIndex: index, parentSSEId: parentSSEId };
             if (subPathIndex === 0) {
                 subPathObj['residue_number'] = startResidueNumber;
                 subPathObj['pathData'] = [
@@ -725,6 +725,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             entryId: this.entryId,
             entityId: this.entityId,
             chainId: this.chainId,
+            parentSSEId: eleData.parentSSEId,
         });
     };
     PdbTopologyViewerPlugin.prototype.mouseoutAction = function (eleObj, eleData) {
@@ -759,10 +760,11 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             entryId: this.entryId,
             entityId: this.entityId,
             chainId: this.chainId,
+            parentSSEId: eleData.parentSSEId,
         });
     };
     // Draws subelements of helices (i.e. residues, that are highlighted on hover)
-    PdbTopologyViewerPlugin.prototype.drawHelicesSubpaths = function (startResidueNumber, stopResidueNumber, index, curveYdiff) {
+    PdbTopologyViewerPlugin.prototype.drawHelicesSubpaths = function (startResidueNumber, stopResidueNumber, index, curveYdiff, parentSSEId) {
         var _this = this;
         curveYdiff = 0;
         var diffVal = 5;
@@ -795,7 +797,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         var subPathObj = {};
         if (curveYdiff === 0) {
             for (var subPathIndex = 0; subPathIndex < totalAaInPath; subPathIndex++) {
-                subPathObj = { type: 'helices' };
+                subPathObj = { type: 'helices', parentSSEId: parentSSEId };
                 if (subPathIndex === 0) {
                     if (this.scaledPointsArr[3] < this.scaledPointsArr[9]) {
                         subPathObj['residue_number'] = stopResidueNumber;
@@ -1259,7 +1261,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             var xCenterScaled = _this_1.xScale(secStrData.center.x);
                             var yCenterScaled = _this_1.yScale(secStrData.center.y);
                             //create subsections/paths
-                            _this_1.drawStrandSubpaths(secStrData.start, secStrData.stop, secStrDataIndex);
+                            _this_1.drawStrandSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, secStrData.twoDProtsSSEId);
                             //Create mask to restore shape
                             _this_1.drawStrandMaskShape(secStrDataIndex);
                             //bring original/complete helices in front newEle
@@ -1274,7 +1276,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             var xCenterScaled = _this_1.xScale(secStrData.center.x);
                             var yCenterScaled = _this_1.yScale(secStrData.center.y);
                             //create subsections/paths
-                            _this_1.drawHelicesSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, curveYdiff);
+                            _this_1.drawHelicesSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, curveYdiff, secStrData.twoDProtsSSEId);
                             //Create mask to restore shape
                             _this_1.drawHelicesMaskShape(secStrDataIndex);
                             // //bring original/complete helices in front
@@ -1300,19 +1302,6 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 return state_1.value;
         }
         ;
-        // Upon user hover on Topology Component residue, highlight that residue in MolStar view 
-        d3.selectAll('path.helicesSubPath, path.strandsSubPath, path.coilsSubPath').on('mouseover', function (event) {
-            // console.log(this); //Element itself
-            // console.log(event); //event with element index, residue_number, path, type (e.g. strand)
-            console.log(event);
-            var data = {
-                'residue_number': event.residue_number,
-                'entityId': _this_1.entityId,
-                'chainId': _this_1.chainId,
-            };
-            var PDBTopologyComponentMouseoverEvent = new CustomEvent('PDB.topologyComponent.mouseover', { 'detail': data });
-            document.dispatchEvent(PDBTopologyComponentMouseoverEvent);
-        });
         //bring rsrz validation circles in front
         this.svgEle._groups[0][0].append(this.svgEle.selectAll('.validationResidue').node());
     };
