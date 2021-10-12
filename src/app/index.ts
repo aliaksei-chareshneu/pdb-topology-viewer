@@ -197,7 +197,6 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		};
 		
 		const topologyData = {
-			'type': undefined,
 			'start': Number(sse[1].residues[0]),
 			'stop': Number(sse[1].residues[1]),
 			'majoraxis': Number(sse[1].size),
@@ -1984,7 +1983,7 @@ class PdbTopologyViewerPlugin {
     handleMolstarEvents(e:any, eType:string){
 
         if(typeof e.eventData !== 'undefined' && Object.keys(e.eventData).length > 0){
-           
+            console.log(e)
             //Remove previous selection / highlight
             let selectionPathClass = 'residueSelection';
             if(eType == 'mouseover'){
@@ -2000,6 +1999,39 @@ class PdbTopologyViewerPlugin {
 
             //Apply new selection
             this.highlight(e.eventData.seq_id, e.eventData.seq_id, undefined, eType);
+			
+			
+			// Handling 3D => 1D interactivity
+			if(eType === 'mouseover'){
+				// Note: there is also seq_id, seem to be equal to residueNumber, but just in case
+				const resNum = e.eventData.residueNumber;
+				const topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
+				const helicesAndSheets = [...topologyData.helices, ...topologyData.strands];
+				// console.log(resNum);
+				// for some reason filter does not work
+				// const targetSSE = helicesAndSheets.filter(sseData => sseData.start <= resNum && sseData.stop >= resNum);
+				let targetSSE;
+				helicesAndSheets.forEach(sseData => {
+					if (sseData.start <= resNum && sseData.stop >= resNum) {
+						targetSSE = sseData;
+					}
+				})
+				// can be undefined e.g. if user hovers over coil or some other domain on 3D that is not displayed on 1D/2D
+				if (targetSSE) {
+					const overprotLabel = targetSSE.twoDProtsSSEId;
+					document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
+						detail: {
+									'sses': [{'label': overprotLabel}]
+								}
+					}));
+				}
+			} else if (eType === 'mouseout') {
+				document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
+					detail: {
+								'sses': []
+							}
+				}));
+			}
         }
     }
 

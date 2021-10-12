@@ -213,7 +213,6 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
             'y': upperRight.y - center.y
         };
         var topologyData = {
-            'type': undefined,
             'start': Number(sse[1].residues[0]),
             'stop': Number(sse[1].residues[1]),
             'majoraxis': Number(sse[1].size),
@@ -1831,6 +1830,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
     };
     PdbTopologyViewerPlugin.prototype.handleMolstarEvents = function (e, eType) {
         if (typeof e.eventData !== 'undefined' && Object.keys(e.eventData).length > 0) {
+            console.log(e);
             //Remove previous selection / highlight
             var selectionPathClass = 'residueSelection';
             if (eType == 'mouseover') {
@@ -1845,6 +1845,38 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 return;
             //Apply new selection
             this.highlight(e.eventData.seq_id, e.eventData.seq_id, undefined, eType);
+            // Handling 3D => 1D interactivity
+            if (eType === 'mouseover') {
+                // Note: there is also seq_id, seem to be equal to residueNumber, but just in case
+                var resNum_1 = e.eventData.residueNumber;
+                var topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
+                var helicesAndSheets = __spreadArrays(topologyData.helices, topologyData.strands);
+                // console.log(resNum);
+                // for some reason filter does not work
+                // const targetSSE = helicesAndSheets.filter(sseData => sseData.start <= resNum && sseData.stop >= resNum);
+                var targetSSE_1;
+                helicesAndSheets.forEach(function (sseData) {
+                    if (sseData.start <= resNum_1 && sseData.stop >= resNum_1) {
+                        targetSSE_1 = sseData;
+                    }
+                });
+                // can be undefined e.g. if user hovers over coil or some other domain on 3D that is not displayed on 1D/2D
+                if (targetSSE_1) {
+                    var overprotLabel = targetSSE_1.twoDProtsSSEId;
+                    document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
+                        detail: {
+                            'sses': [{ 'label': overprotLabel }]
+                        }
+                    }));
+                }
+            }
+            else if (eType === 'mouseout') {
+                document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
+                    detail: {
+                        'sses': []
+                    }
+                }));
+            }
         }
     };
     PdbTopologyViewerPlugin.prototype.subscribeWcEvents = function () {
