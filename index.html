@@ -99,6 +99,10 @@
 			}], color: {r:255,g:0,b:0},});
 		});
 		
+		document.addEventListener('PDB.topologyViewer.mouseout', (event) => {
+			viewerInstance.visual.clearHighlight();
+		});
+		
 		<!-- TODO: add visual highlight based on d and this -->
 		
 		document.addEventListener('PDB.topologyComponent.click', (event) => {
@@ -152,8 +156,8 @@
 				d3.selectAll('.topologyEle.topologyEleTopLayer')
 				.attr('fill', 'none')
 				.attr('fill-opacity', null)
-				<!-- TODO: Trying to empty highlight offhover 1D, this doesn't work -->
-				<!-- viewerInstance.visual.highlight({}); -->
+				
+				viewerInstance.visual.clearHighlight();
 			}
         });
 	</script>
