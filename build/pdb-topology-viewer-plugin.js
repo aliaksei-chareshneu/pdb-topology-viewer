@@ -444,10 +444,17 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 d3.selectAll('.topologyEle:not(.inMaskTag)').clone(true)
                     .classed('topologyEleTopLayer', true)
                     .raise();
-                // Trying to implement 1D => 3D interactivity mediated by 2D
-                // .on('mouseover', function(d:any){ _this.mouseoverAction(this, d); })
-                // .on('mousemove', function(d:any){ _this.mouseoverAction(this, d); })
-                // .on('mouseout', function(d:any){ _this.mouseoutAction(this, d); });
+                // Copying and inserting the copy of maskpathes to another mask element to cutout the regions of .residueHighlight paths where they extend beyond the shape of arrow-like strands
+                var copies = d3.selectAll('.helicesMaskPath, .strandMaskPath')
+                    .clone(true)
+                    .attr('fill', 'black')
+                    .attr('stroke-width', 0)
+                    .classed('inMaskTag', true);
+                var maskpathMask_1 = d3.select('#residueHighlight3Dto2DMask');
+                copies.each(function () {
+                    var _this_1 = this;
+                    maskpathMask_1.append(function () { return _this_1; });
+                });
                 _this_1.createDomainDropdown();
                 if (_this_1.subscribeEvents)
                     _this_1.subscribeWcEvents();
@@ -1127,7 +1134,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         var svgWt = svgSectionWt - 5;
         // Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
         // Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
-        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 128 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\">\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"userSpaceOnUse\">\n\t\t\t\t\t<rect\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"128\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
+        // Also added another mask to make .residueHighlight paths appearing on 3D hover in 2D fit the shape of strand arrows
+        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 128 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\">\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"userSpaceOnUse\">\n\t\t\t\t\t<rect\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"128\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t\t<mask id=\"residueHighlight3Dto2DMask\" maskUnits=\"userSpaceOnUse\">\n\t\t\t\t\t<rect\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"128\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
         this.svgEle = d3.select(this.targetEle).select('.topoSvg');
         this.getDomainRange();
         this.scaledPointsArr = [];
@@ -1478,6 +1486,9 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 .attr('stroke', stroke)
                 .attr('stroke-opacity', strokeOpacity)
                 .attr('stroke-width', strokeWidth)
+                // mask to make shape fit strands arrow shape
+                // do not work well, need to investigate later
+                // .attr('mask', 'url(#residueHighlight3Dto2DMask)')
                 .on('mouseover', function (d) { _this.mouseoverAction(residueEleNode, residueEleData[0]); })
                 .on('mousemove', function (d) { _this.mouseoverAction(residueEleNode, residueEleData[0]); })
                 .on('mouseout', function (d) { _this.mouseoutAction(residueEleNode, residueEleData[0]); })

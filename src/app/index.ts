@@ -370,11 +370,17 @@ class PdbTopologyViewerPlugin {
 				d3.selectAll('.topologyEle:not(.inMaskTag)').clone(true)
 				.classed('topologyEleTopLayer', true)
 				.raise()
-				// Trying to implement 1D => 3D interactivity mediated by 2D
-				// .on('mouseover', function(d:any){ _this.mouseoverAction(this, d); })
-				// .on('mousemove', function(d:any){ _this.mouseoverAction(this, d); })
-				// .on('mouseout', function(d:any){ _this.mouseoutAction(this, d); });
-
+				
+				// Copying and inserting the copy of maskpathes to another mask element to cutout the regions of .residueHighlight paths where they extend beyond the shape of arrow-like strands
+				const copies = d3.selectAll('.helicesMaskPath, .strandMaskPath')
+				.clone(true)
+				.attr('fill', 'black')
+				.attr('stroke-width', 0)
+				.classed('inMaskTag', true)
+				const maskpathMask = d3.select('#residueHighlight3Dto2DMask')
+				
+				copies.each(function() {maskpathMask.append(() => this)})
+				
                 this.createDomainDropdown();
 
                 if(this.subscribeEvents) this.subscribeWcEvents();
@@ -1143,9 +1149,18 @@ class PdbTopologyViewerPlugin {
         const svgWt = svgSectionWt - 5;
 		// Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
 		// Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
+		// Also added another mask to make .residueHighlight paths appearing on 3D hover in 2D fit the shape of strand arrows
         svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 128 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;">
 			<defs>
 				<mask id="cutoutCoilsMask" maskUnits="userSpaceOnUse">
+					<rect
+						x="0"
+						y="0"
+						width="128"
+						height="100"
+						fill="white" />
+				</mask>
+				<mask id="residueHighlight3Dto2DMask" maskUnits="userSpaceOnUse">
 					<rect
 						x="0"
 						y="0"
@@ -1538,6 +1553,9 @@ class PdbTopologyViewerPlugin {
                     .attr('stroke', stroke)
                     .attr('stroke-opacity', strokeOpacity)
                     .attr('stroke-width', strokeWidth)
+					// mask to make shape fit strands arrow shape
+					// do not work well, need to investigate later
+					// .attr('mask', 'url(#residueHighlight3Dto2DMask)')
                     .on('mouseover', (d: any) => { _this.mouseoverAction(residueEleNode, residueEleData[0]); })
                     .on('mousemove', (d: any) => { _this.mouseoverAction(residueEleNode, residueEleData[0]); })
                     .on('mouseout', (d: any) => { _this.mouseoutAction(residueEleNode, residueEleData[0]); })
