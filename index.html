@@ -117,7 +117,8 @@
 				console.log('PDB.overprot.hover', event);
 				<!-- TODO: fix console error - offhover overprot shoots another event with .sses = empty array -->
 				const sses = event.detail.sses;
-				sses.forEach(sse => {
+				
+				let molstarData = sses.map(sse => {
 					<!-- Right now sseLabel selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fixed by adding class to the last one -->
 					const data = d3.select(`#${sse.label}.topologyEleTopLayer`)
 					.attr('fill', 'rgb(211,211,211)')
@@ -128,21 +129,31 @@
 					console.log(data[0]);
 					<!-- Checking if this SSE exists in 2D view -->
 					if (data[0]) {
-						viewerInstance.visual.highlight({ data: [{
-							entity_id: data[0].proteinData.entityId,
-							struct_asym_id: data[0].proteinData.chainId,
-							start_residue_number: data[0].start,
-							end_residue_number: data[0].stop,
-						}], color: {r:255,g:0,b:0},});
+						const molstarSelectionData = {
+						entity_id: data[0].proteinData.entityId,
+						struct_asym_id: data[0].proteinData.chainId,
+						start_residue_number: data[0].start,
+						end_residue_number: data[0].stop,
+						};
+						return molstarSelectionData;
 					} else {
 						console.log(`${sse.label} secondary structure element is not present in selected domain, only in some other proteins of that family.`)
-					}				
+						return {}
+					}					
 				});
+				
+				molstarData = molstarData.filter(d => Object.keys(d).length !== 0);
+				console.log(molstarData);
+				
+				viewerInstance.visual.highlight({ data: molstarData, color: {r:255,g:0,b:0},});
+				
 			} else {
 				<!-- empty detail.label arr => event was fired onmouseover/offhover -->
 				d3.selectAll('.topologyEle.topologyEleTopLayer')
 				.attr('fill', 'none')
 				.attr('fill-opacity', null)
+				<!-- TODO: Trying to empty highlight offhover 1D, this doesn't work -->
+				<!-- viewerInstance.visual.highlight({}); -->
 			}
         });
 	</script>
