@@ -197,6 +197,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		};
 		
 		const topologyData = {
+			'type': undefined,
 			'start': Number(sse[1].residues[0]),
 			'stop': Number(sse[1].residues[1]),
 			'majoraxis': Number(sse[1].size),
@@ -219,6 +220,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 			topologyData.stopCoord.y = topologyData.path[3];
 			topologyData.startCoord.x = topologyData.path[8];
 			topologyData.startCoord.y = topologyData.path[9];
+			
 			outputJSON[entryID]['1'][chainID].helices.push(topologyData);
 		} else if (sseType == 'E' || '?') {
 			const pathCartesian = composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD);
@@ -227,6 +229,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 			topologyData.startCoord.y = topologyData.center.y + topologyData.majoraxis/2;
 			topologyData.stopCoord.x = topologyData.path[6];
 			topologyData.stopCoord.y = topologyData.path[7];
+			
 			outputJSON[entryID]['1'][chainID].strands.push(topologyData);
 		} else {
 			console.error('Unknown SSE type!');
@@ -347,6 +350,7 @@ class PdbTopologyViewerPlugin {
 
     // Not used here
     initPainting(){
+		const _this = this;
         this.getApiData(this.entryId, this.chainId).then(result => {
             if(result){
                 result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], this.entryId, this.chainId);
@@ -364,7 +368,14 @@ class PdbTopologyViewerPlugin {
                 this.drawTopologyStructures();
 				this.drawConnectingCoils();
 				// To hide endings of connecting coils lying above topoEles	
-				d3.selectAll('.topologyEle').clone(true).classed('topologyEleTopLayer', true).raise();
+				d3.selectAll('.topologyEle:not(.inMaskTag)').clone(true)
+				.classed('topologyEleTopLayer', true)
+				.raise()
+				// Trying to implement 1D => 3D interactivity mediated by 2D
+				// .on('mouseover', function(d:any){ _this.mouseoverAction(this, d); })
+				// .on('mousemove', function(d:any){ _this.mouseoverAction(this, d); })
+				// .on('mouseout', function(d:any){ _this.mouseoutAction(this, d); });
+
                 this.createDomainDropdown();
 
                 if(this.subscribeEvents) this.subscribeWcEvents();
@@ -693,7 +704,7 @@ class PdbTopologyViewerPlugin {
             entryId: this.entryId,
             entityId: this.entityId,
             chainId: this.chainId,
-			parentSSEId: eleData.parentSSEId,
+			parentSSEId: eleData.parentSSEId || undefined,
             // structAsymId: scope.bestStructAsymId
         });
     }
@@ -731,7 +742,7 @@ class PdbTopologyViewerPlugin {
             entryId: this.entryId,
             entityId: this.entityId,
             chainId: this.chainId,
-			parentSSEId: eleData.parentSSEId,
+			parentSSEId: eleData.parentSSEId || undefined,
             // structAsymId: scope.bestStructAsymId
         });
     }
@@ -1215,6 +1226,11 @@ class PdbTopologyViewerPlugin {
                         // adds new properties to array obtained from PDBe topology API
                         secStrData.secStrType = secStrType;
                         secStrData.pathIndex = secStrDataIndex;
+						secStrData.proteinData = {
+							'entryId': this.entryId,
+							'entityId': this.entityId,
+							'chainId': this.chainId,
+						} 
                         // selectAll is d3 function that selects elements based on CSS-like query
                         const newEle = this.svgEle.selectAll('path.'+secStrType+''+secStrDataIndex)
                         // d3.data binds array of data to previously selected elements
@@ -1280,7 +1296,7 @@ class PdbTopologyViewerPlugin {
 						
 						// Copying and inserting the copy of topoEle to mask to cutout the coils in regions where they overlap, and setting fill to black
 						// so that it will be cut out (with white it will be left visible)
-						const copy = newEle.clone(true).attr('fill', 'black').attr('stroke-width', 0);
+						const copy = newEle.clone(true).attr('fill', 'black').attr('stroke-width', 0).classed('inMaskTag', true);
 						const mask = d3.select("#cutoutCoilsMask");
 						// or copy.node()
 						mask.append(() => copy.node());

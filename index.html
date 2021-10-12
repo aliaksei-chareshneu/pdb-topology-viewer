@@ -63,12 +63,55 @@
 	</div>
 	<!-- OverProt script (e.g. events) -->
 	<script>
+	
+		//Create plugin instance
+		const viewerInstance = new PDBeMolstarPlugin();
+
+		//Set options (Checkout available options list in the documentation)
+		var options = {
+			moleculeId: '3oh1',
+			hideControls: true
+		}
+
+		//Get element from HTML/Template to place the viewer 
+		var viewerContainer = document.getElementById('myViewer');
+
+		//Call render method to display the 3D view
+		viewerInstance.render(viewerContainer, options);
+		
+		<!-- TODO: fix, struct_asym_id is not always A -->
+		const targetChainSelection = [{
+			struct_asym_id: 'A', 
+			color:{r:255,g:255,b:255},
+			focus: true,
+		}];
+		
+		viewerInstance.events.loadComplete.subscribe(() => {
+			viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}});
+		});
+		
+		// Upon user hover on Topology Component residue, highlight that residue in MolStar view
+		document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
+			viewerInstance.visual.highlight({ data: [{
+				entity_id: event.eventData['entityId'],
+				struct_asym_id: event.eventData['chainId'],
+				residue_number: event.eventData['residueNumber'],
+			}], color: {r:255,g:0,b:0},});
+		});
+		
+		<!-- TODO: add visual highlight based on d and this -->
+		
+		document.addEventListener('PDB.topologyComponent.click', (event) => {
+		});
+		
 		<!-- document.addEventListener('PDB.overprot.select', (event) => { -->
             <!-- console.log('PDB.overprot.select', event); -->
             <!-- for (const viewer of document.querySelectorAll('overprot-viewer')) { -->
                 <!-- viewer.dispatchEvent(new CustomEvent('PDB.overprot.do.select', {detail: event.detail})); -->
             <!-- } -->
         <!-- }); -->
+		
+		<!-- H5 helix is not present in 2D, so it is not highlighted -->
         document.addEventListener('PDB.overprot.hover', (event) => {
 			if (event.detail.sses[0]) {
 				console.log('PDB.overprot.hover', event);
@@ -76,11 +119,30 @@
 				const sses = event.detail.sses;
 				sses.forEach(sse => {
 					<!-- Right now sseLabel selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fixed by adding class to the last one -->
-					d3.selectAll(`#${sse.label}.topologyEleTopLayer`).attr('fill', 'rgb(211,211,211)').attr('fill-opacity','1.0')
+					const data = d3.select(`#${sse.label}.topologyEleTopLayer`)
+					.attr('fill', 'rgb(211,211,211)')
+					.attr('fill-opacity','1.0')
+					.data()
+					<!-- TODO: add Mol* selection thing -->
+					<!-- data[0] contains data bound to topologyEle, including residues -->
+					console.log(data[0]);
+					<!-- Checking if this SSE exists in 2D view -->
+					if (data[0]) {
+						viewerInstance.visual.highlight({ data: [{
+							entity_id: data[0].proteinData.entityId,
+							struct_asym_id: data[0].proteinData.chainId,
+							start_residue_number: data[0].start,
+							end_residue_number: data[0].stop,
+						}], color: {r:255,g:0,b:0},});
+					} else {
+						console.log(`${sse.label} secondary structure element is not present in selected domain, only in some other proteins of that family.`)
+					}				
 				});
 			} else {
 				<!-- empty detail.label arr => event was fired onmouseover/offhover -->
-				d3.selectAll('.topologyEle.topologyEleTopLayer').attr('fill', 'none')
+				d3.selectAll('.topologyEle.topologyEleTopLayer')
+				.attr('fill', 'none')
+				.attr('fill-opacity', null)
 			}
         });
 	</script>
@@ -102,16 +164,6 @@
     
         //Call render method to display the 2D view
         pluginInstance.render(viewContainer, options);
-		
-		// TESTING
-		<!-- const p = pluginInstance -->
-		<!-- one = p.chunkArray([1, 2, 3, 4, 5], 2) -->
-		<!-- two = p.chunkArray([1, 2, 3, 4, 5], 3) -->
-		
-		<!-- console.log(two) -->
-		<!-- console.log(one) -->
-		
-		// ENDOFTESTING
 		
 		<!-- 2D => 1D hover event listener -->
 		document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
@@ -137,42 +189,7 @@
 	
 	<!-- PDB Mol* component script -->
 	<script>
-      //Create plugin instance
-		var viewerInstance = new PDBeMolstarPlugin();
-
-		//Set options (Checkout available options list in the documentation)
-		var options = {
-			moleculeId: '3oh1',
-			hideControls: true
-		}
-
-		//Get element from HTML/Template to place the viewer 
-		var viewerContainer = document.getElementById('myViewer');
-
-		//Call render method to display the 3D view
-		viewerInstance.render(viewerContainer, options);
-		
-		const targetChainSelection = [{
-			struct_asym_id: 'A', 
-			color:{r:255,g:255,b:255},
-			focus: true,
-		}];
-		
-		viewerInstance.events.loadComplete.subscribe(() => {
-			viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}});
-		});
-		
-		// Upon user hover on Topology Component residue, highlight that residue in MolStar view
-		document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
-			viewerInstance.visual.highlight({ data: [{
-				entity_id: event.eventData['entityId'],
-				struct_asym_id: event.eventData['chainId'],
-				residue_number: event.eventData['residueNumber'],
-			}], color: {r:255,g:0,b:0},});
-		});
-		
-		document.addEventListener('PDB.topologyComponent.click', (event) => {
-		});
+      
 	  
     </script>
   </body>
