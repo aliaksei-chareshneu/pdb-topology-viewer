@@ -33,6 +33,8 @@ declare class PdbTopologyViewerPlugin {
     displayStyle: string;
     errorStyle: string;
     menuStyle: string;
+    familyId: string;
+    domainId: string;
     sequenceArr: string[];
     entityId: string;
     entryId: string;
@@ -50,6 +52,8 @@ declare class PdbTopologyViewerPlugin {
     svgEle: any;
     subscribeEvents: boolean;
     render(target: HTMLElement, options: {
+        domainId: string;
+        familyId: string;
         entityId: string;
         entryId: string;
         chainId?: string;
@@ -62,7 +66,7 @@ declare class PdbTopologyViewerPlugin {
     displayError(errType?: string): void;
     createNewEvent: (eventTypeArr: string[]) => any;
     getObservedResidues(pdbId: string): Promise<any>;
-    getApiData(pdbId: string, chainId: string): Promise<any[]>;
+    getApiData(pdbId: string, chainId: string, familyId: string, domainId: string): Promise<any[]>;
     getPDBSequenceArray(entities: any[]): void;
     chunkArray(arr: any[], len: number): any[][];
     getDomainRange(): void;

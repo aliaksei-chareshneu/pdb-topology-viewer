@@ -291,7 +291,9 @@ class PdbTopologyViewerPlugin {
     displayStyle = 'border:1px solid #696969;';
     errorStyle = 'border:1px solid #696969; height:54%; padding-top:46%; text-align:center; font-weight:bold;';
     menuStyle = 'position:relative;height:38px;line-height:38px;background-color:#696969;padding: 0 10px;font-size:16px; color: #efefef;';
-
+	
+	familyId: string;
+	domainId: string;
     sequenceArr: string[];
     entityId: string;
     entryId: string;
@@ -315,7 +317,7 @@ class PdbTopologyViewerPlugin {
     subscribeEvents = true;
 
     // Not used here
-    render(target: HTMLElement, options:{entityId: string, entryId: string, chainId?: string, subscribeEvents?:boolean, displayStyle?: string, errorStyle?: string, menuStyle?: string}) {
+    render(target: HTMLElement, options:{domainId: string, familyId: string, entityId: string, entryId: string, chainId?: string, subscribeEvents?:boolean, displayStyle?: string, errorStyle?: string, menuStyle?: string}) {
         if(options && typeof options.displayStyle != 'undefined' && options.displayStyle != null) this.displayStyle += options.displayStyle;
         if(options && typeof options.errorStyle != 'undefined' && options.errorStyle != null) this.errorStyle += options.errorStyle;
         if(options && typeof options.menuStyle != 'undefined' && options.menuStyle != null) this.menuStyle += options.menuStyle;
@@ -328,6 +330,8 @@ class PdbTopologyViewerPlugin {
         if(options.subscribeEvents == false) this.subscribeEvents = false;
         this.entityId = options.entityId;
         this.entryId = options.entryId.toLowerCase();
+		this.domainId = options.domainId;
+		this.familyId = options.familyId;
         
         // TODO: Investigate what it does to undertand what entityId to write to converted JSON (always 1, or 1 if chain A, 2 if B etc.)
         //If chain id is not provided then get best chain id from observed residues api
@@ -350,7 +354,8 @@ class PdbTopologyViewerPlugin {
     // Not used here
     initPainting(){
 		const _this = this;
-        this.getApiData(this.entryId, this.chainId).then(result => {
+		// console.log(this.entryId, this.chainId, this.familyId, this.domainId);
+        this.getApiData(this.entryId, this.chainId, this.familyId, this.domainId).then(result => {
             if(result){
                 result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], this.entryId, this.chainId);
 				console.log(result[2])
@@ -426,7 +431,7 @@ class PdbTopologyViewerPlugin {
         }
     }
 
-    async getApiData(pdbId: string, chainId: string) {
+    async getApiData(pdbId: string, chainId: string, familyId: string, domainId: string) {
         // const dataUrls = [
         //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
         //     `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
@@ -434,7 +439,7 @@ class PdbTopologyViewerPlugin {
         //     `https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
         //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         // ]
-
+		const twoDprotsDomainId = `${domainId.slice(0, 4)}_${domainId.slice(4)}`
         const dataUrls = [
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
@@ -451,12 +456,17 @@ class PdbTopologyViewerPlugin {
 			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/236fa166e432af64b9cfaf494169be357c90b070/image-3oh1_A02.json`,
 			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/236fa166e432af64b9cfaf494169be357c90b070/image-3oh2_A02.json`,
 			// The following two should work:
-			`https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3oh1_A02.json`,
+			// WORKING ONE
+			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3oh1_A02.json`,
 			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3ogz_A02.json`,
+			// NOT VERY MUCH WORKING (2021-10... problem?)
+			// currently works only for 2.40.160.10 family, tried several domains from domains list for that family that was obtained from overprot
+			// What is 00 before .json? Is it entityId? 00=1? Probably not
+			`https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T11_52_33_653629990_02_00/image-${twoDprotsDomainId}.json`,
 			`https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         ]
-
+		console.log(dataUrls[2]);
         return Promise.all(dataUrls.map(url => fetch(url)))
         .then(resp => Promise.all( 
                 resp.map((r) => { 

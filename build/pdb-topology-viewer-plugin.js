@@ -403,6 +403,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             this.subscribeEvents = false;
         this.entityId = options.entityId;
         this.entryId = options.entryId.toLowerCase();
+        this.domainId = options.domainId;
+        this.familyId = options.familyId;
         // TODO: Investigate what it does to undertand what entityId to write to converted JSON (always 1, or 1 if chain A, 2 if B etc.)
         //If chain id is not provided then get best chain id from observed residues api
         if (typeof options.chainId == 'undefined' || options.chainId == null) {
@@ -425,7 +427,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
     PdbTopologyViewerPlugin.prototype.initPainting = function () {
         var _this_1 = this;
         var _this = this;
-        this.getApiData(this.entryId, this.chainId).then(function (result) {
+        // console.log(this.entryId, this.chainId, this.familyId, this.domainId);
+        this.getApiData(this.entryId, this.chainId, this.familyId, this.domainId).then(function (result) {
             if (result) {
                 result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], _this_1.entryId, _this_1.chainId);
                 console.log(result[2]);
@@ -489,10 +492,11 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             });
         });
     };
-    PdbTopologyViewerPlugin.prototype.getApiData = function (pdbId, chainId) {
+    PdbTopologyViewerPlugin.prototype.getApiData = function (pdbId, chainId, familyId, domainId) {
         return __awaiter(this, void 0, void 0, function () {
-            var dataUrls;
+            var twoDprotsDomainId, dataUrls;
             return __generator(this, function (_a) {
+                twoDprotsDomainId = domainId.slice(0, 4) + "_" + domainId.slice(4);
                 dataUrls = [
                     "https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/" + pdbId,
                     "https://www.ebi.ac.uk/pdbe/api/mappings/" + pdbId,
@@ -509,11 +513,17 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                     // `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/236fa166e432af64b9cfaf494169be357c90b070/image-3oh1_A02.json`,
                     // `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/236fa166e432af64b9cfaf494169be357c90b070/image-3oh2_A02.json`,
                     // The following two should work:
-                    "https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3oh1_A02.json",
+                    // WORKING ONE
+                    // `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3oh1_A02.json`,
                     // `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3ogz_A02.json`,
+                    // NOT VERY MUCH WORKING (2021-10... problem?)
+                    // currently works only for 2.40.160.10 family, tried several domains from domains list for that family that was obtained from overprot
+                    // What is 00 before .json? Is it entityId? 00=1? Probably not
+                    "https://2dprots.ncbr.muni.cz/static/web/generated-" + familyId + "/2021-10-04T11_52_33_653629990_02_00/image-" + twoDprotsDomainId + ".json",
                     "https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/" + pdbId,
                     "https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/" + pdbId + "/chain/" + chainId
                 ];
+                console.log(dataUrls[2]);
                 return [2 /*return*/, Promise.all(dataUrls.map(function (url) { return fetch(url); }))
                         .then(function (resp) { return Promise.all(resp.map(function (r) {
                         if (r.status == 200) {
