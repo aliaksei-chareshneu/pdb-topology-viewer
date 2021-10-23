@@ -177,6 +177,9 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
     var CONVEXITY = 2 / 5;
     var ARROW_SPREAD = 1 * 2 / 5;
     var ARROW_HEIGHT = 4 / 5;
+    // for recognizing 2DProts SSE labels
+    var STRANDS_CHARS = ['T', 'E', 'B', 'S', 't', 'e', 'b', 's'];
+    var HELICES_CHARS = ['I', 'H', 'A', 'G', 'i', 'h', 'a', 'g'];
     // Coordinates of upper right and lower left corners of "canvas"
     var upperRight = {
         'x': inputJson.metadata['upper_right'][0],
@@ -220,14 +223,17 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
             'center': centerYReversed,
             'color': sse[1].color,
             'angle': sse[1].angles,
-            'twoDProtsSSEId': sse[0],
+            'twoDProtsSSEId': sse[0].replace(/\?/g, ''),
             'path': undefined,
             // data for drawing coils between helices and/or strands
             'startCoord': { 'x': undefined, 'y': undefined },
             'stopCoord': { 'x': undefined, 'y': undefined },
         };
         var sseType = sse[0].charAt(0);
-        if (sseType === 'H') {
+        if (sseType === '?') {
+            sseType = sse[0].charAt(1);
+        }
+        if (HELICES_CHARS.indexOf(sseType) > -1) {
             var pathCartesian = composePathHelix(center, MINORAXIS, sse, CONVEXITY);
             topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
             topologyData.stopCoord.x = topologyData.path[2];
@@ -236,7 +242,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
             topologyData.startCoord.y = topologyData.path[9];
             outputJSON[entryID]['1'][chainID].helices.push(topologyData);
         }
-        else if (sseType == 'E' || '?') {
+        else if (STRANDS_CHARS.indexOf(sseType) > -1) {
             var pathCartesian = composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD);
             topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
             topologyData.startCoord.x = topologyData.center.x;
