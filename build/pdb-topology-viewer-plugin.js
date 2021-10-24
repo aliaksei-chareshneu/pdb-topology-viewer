@@ -306,6 +306,10 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         this.displayStyle = 'border:1px solid #696969;';
         this.errorStyle = 'border:1px solid #696969; height:54%; padding-top:46%; text-align:center; font-weight:bold;';
         this.menuStyle = 'position:relative;height:38px;line-height:38px;background-color:#696969;padding: 0 10px;font-size:16px; color: #efefef;';
+        this.twoDProtsData = {
+            topologyData: undefined,
+            residueNumbers: undefined,
+        };
         // svgWidth = 100;
         this.svgWidth = 128;
         this.svgHeight = 100;
@@ -444,6 +448,16 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                     return;
                 }
                 _this_1.apiData = result;
+                var topologyData = _this_1.apiData[2][_this_1.entryId][_this_1.entityId][_this_1.chainId];
+                _this_1.twoDProtsData.topologyData = __spreadArrays(topologyData.helices, topologyData.strands).sort(function (a, b) { return a.stop < b.start ? -1 : 1; });
+                _this_1.twoDProtsData.residueNumbers = {
+                    'start': _this_1.twoDProtsData.topologyData[0].start,
+                    'stop': _this_1.twoDProtsData.topologyData.slice(-1)[0].stop,
+                };
+                document.querySelector('#pdb-topology-viewer').dispatchEvent(new CustomEvent('PDBtopologyViewerApiDataLoaded', {
+                    bubbles: true,
+                    detail: {},
+                }));
                 //default pdb events
                 _this_1.pdbevents = _this_1.createNewEvent(['PDB.topologyViewer.click', 'PDB.topologyViewer.mouseover', 'PDB.topologyViewer.mouseout']);
                 _this_1.getPDBSequenceArray(_this_1.apiData[0][_this_1.entryId]);
@@ -526,6 +540,10 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                     // currently works only for 2.40.160.10 family, tried several domains from domains list for that family that was obtained from overprot
                     // What is 00 before .json? Is it entityId? 00=1? Probably not
                     "https://2dprots.ncbr.muni.cz/static/web/generated-" + familyId + "/2021-10-04T11_52_33_653629990_02_00/image-" + twoDprotsDomainId + ".json",
+                    // `https://2dprots.ncbr.muni.cz/static/web/generated-2.70.170.10/2021-10-04T11_15_36_727366416_02_00/image-2bg9_A01.json`,
+                    // For the generalized redirect version below:
+                    // Access to fetch at 'http://2dprots.ncbr.muni.cz/files/domain/2bg9A01/json' (redirected from 'https://2dprots.ncbr.muni.cz/files/domain/2bg9A01/latest/json') from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
+                    // `https://2dprots.ncbr.muni.cz/files/domain/${domainId}/latest/json`,
                     "https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/" + pdbId,
                     "https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/" + pdbId + "/chain/" + chainId
                 ];

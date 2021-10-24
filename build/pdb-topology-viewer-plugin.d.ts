@@ -40,6 +40,10 @@ declare class PdbTopologyViewerPlugin {
     entryId: string;
     chainId: string;
     apiData: any;
+    twoDProtsData: {
+        topologyData: undefined;
+        residueNumbers: undefined;
+    };
     targetEle: HTMLElement;
     pdbevents: any;
     xScale: any;

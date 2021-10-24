@@ -306,6 +306,10 @@ class PdbTopologyViewerPlugin {
     entryId: string;
     chainId: string;
     apiData: any;
+	twoDProtsData = {
+		topologyData: undefined,
+		residueNumbers: undefined,
+	};
     targetEle: HTMLElement;
     pdbevents: any
 
@@ -373,6 +377,18 @@ class PdbTopologyViewerPlugin {
                 }
 
                 this.apiData = result;
+				const topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
+				this.twoDProtsData.topologyData = [...topologyData.helices, ...topologyData.strands].sort((a, b) => a.stop < b.start ? -1 : 1);
+				this.twoDProtsData.residueNumbers = {
+					'start': this.twoDProtsData.topologyData[0].start,
+					'stop': this.twoDProtsData.topologyData.slice(-1)[0].stop,
+				};
+				
+				document.querySelector('#pdb-topology-viewer').dispatchEvent(new CustomEvent('PDBtopologyViewerApiDataLoaded', {
+					bubbles: true,
+					detail: {},
+				}));
+				
                 //default pdb events
 			    this.pdbevents = this.createNewEvent(['PDB.topologyViewer.click','PDB.topologyViewer.mouseover','PDB.topologyViewer.mouseout']);
                 this.getPDBSequenceArray(this.apiData[0][this.entryId]);
@@ -470,6 +486,10 @@ class PdbTopologyViewerPlugin {
 			// currently works only for 2.40.160.10 family, tried several domains from domains list for that family that was obtained from overprot
 			// What is 00 before .json? Is it entityId? 00=1? Probably not
 			`https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T11_52_33_653629990_02_00/image-${twoDprotsDomainId}.json`,
+			// `https://2dprots.ncbr.muni.cz/static/web/generated-2.70.170.10/2021-10-04T11_15_36_727366416_02_00/image-2bg9_A01.json`,
+			// For the generalized redirect version below:
+			// Access to fetch at 'http://2dprots.ncbr.muni.cz/files/domain/2bg9A01/json' (redirected from 'https://2dprots.ncbr.muni.cz/files/domain/2bg9A01/latest/json') from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
+			// `https://2dprots.ncbr.muni.cz/files/domain/${domainId}/latest/json`,
 			`https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         ]

@@ -110,14 +110,14 @@
 	// (async () => {
 		class IntegratedViewer {
 			constructor() {
-				// this.plugins = {
-					// 'twoD': {
-						// 'instance': new PdbTopologyViewerPlugin(),
-					// },
-					// 'threeD': {
-						// 'instance': new PDBeMolstarPlugin(),
-					// },
-				// };
+				this.plugins = {
+					'twoD': {
+						'instance': undefined,
+					},
+					'threeD': {
+						'instance': undefined,
+					},
+				};
 				this.wellcomePage = true;
 				this.currentUrl = window.location.href;
 				this.familyId;
@@ -152,7 +152,8 @@
 			render3D() {
 				//Create plugin instance
 				const viewerInstance = new PDBeMolstarPlugin();
-
+				this.plugins.threeD.instance = viewerInstance;
+				// console.log(viewerInstance);
 				//Set options (Check out available options list in the documentation)
 				var options = {
 					moleculeId: this.pdbId,
@@ -165,16 +166,29 @@
 				//Call render method to display the 3D view
 				viewerInstance.render(viewerContainer, options);
 				
-				<!-- TODO: fix, struct_asym_id is not always A -->
-				const targetChainSelection = [{
-					struct_asym_id: this.structAsymId, 
-					color:{r:255,g:255,b:255},
-					focus: true,
-				}];
-				
-				viewerInstance.events.loadComplete.subscribe(() => {
-					viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}});
+				// Promise for 3D load completion
+				const loadComplete = new Promise((resolve, reject) => {
+					viewerInstance.events.loadComplete.subscribe(() => {resolve()});
+					console.log('3d loaded');
 				});
+				
+				const twoDProtsApiDataObtained = new Promise((resolve, reject) => {
+					document.addEventListener('PDBtopologyViewerApiDataLoaded', resolve, false);
+				});
+				
+				const _this = this;
+				Promise.all([loadComplete, twoDProtsApiDataObtained]).then(() => {
+					console.log('both api data and 3d are ready')
+					const targetChainSelection = [{
+						struct_asym_id: _this.structAsymId, 
+						color:{r:255,g:255,b:255},
+						focus: true,
+						// For selecting just the domain of interest
+						start_residue_number: _this.plugins.twoD.instance.twoDProtsData.residueNumbers.start,
+						end_residue_number: _this.plugins.twoD.instance.twoDProtsData.residueNumbers.stop,
+					}];
+					viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}});
+				})
 				
 				// Upon user hover on Topology Component residue, highlight that residue in MolStar view
 				document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
@@ -252,7 +266,7 @@
 				// document.addEventListener('DOMContentLoaded', () => {
 					//Create plugin instance
 					const pluginInstance = new PdbTopologyViewerPlugin();
-
+					this.plugins.twoD.instance = pluginInstance;
 					//Get element from HTML/Template to place the view
 					const viewContainer = document.getElementById('pdb-topology-viewer');
 					console.log(this.pdbId, this.entityId, this.structAsymId, this.familyId, this.domainId)
@@ -315,7 +329,7 @@
 				.then(() => {
 					instance.render1D();
 					instance.render2D();
-					instance.render3D();	
+					instance.render3D();
 				});
 			});
 		}		
