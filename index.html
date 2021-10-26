@@ -82,10 +82,10 @@
 				</div>
 				<label for="domainsSelector" class="col-sm-2 col-form-label col-form-label-sm">Protein domain:</label>
 				<div class="col">
-					<select id="domainsSelector" class="selectpicker form-control form-control-sm show-tick" data-live-search="true" data-size="5" data-hide-disabled="false" data-container "body" onchange=""></select>
+					<select id="domainsSelector" class="selectpicker form-control form-control-sm show-tick" data-live-search="true" data-size="5" data-hide-disabled="false" data-container="body" onchange=""></select>
 				</div>
 				<div class="col-2">
-					<button type="submit" id="submitFamilyAndDomainForm" class="btn btn-primary">Submit</button>
+					<button type="submit" id="submitFamilyAndDomainForm" class="btn btn-sm btn-primary" disabled>Submit</button>
 				</div>
 			</div>
 		</form>
@@ -119,7 +119,7 @@
 					},
 				};
 				this.wellcomePage = true;
-				this.currentUrl = window.location.href;
+				this.currentUrl = new URL(window.location.href);
 				this.familyId;
 				this.domainId;
 				this.pdbId;
@@ -128,25 +128,54 @@
 				// TODO: determine!
 				this.entityId = '1';
 				
+				this.familyAndDomainForm = document.getElementById('familyAndDomainForm');
+				this.familiesSelectEle = document.getElementById('familiesSelector');
+				this.domainsSelectEle = document.getElementById('domainsSelector');
+				this.submitButton = document.getElementById('submitFamilyAndDomainForm');
+				
+				// this.familiesList;
+				// this.domainsList;
 				
 			}
 			
 			parseUrl() {
-				const url = new URL(this.currentUrl);
-				this.familyId = url.searchParams.get('family_id');
-				this.domainId = url.searchParams.get('domain_id');
+				this.familyId = this.currentUrl.searchParams.get('family_id');
+				this.domainId = this.currentUrl.searchParams.get('domain_id');
 				if (this.familyId && this.domainId) {
 					this.wellcomePage = false;
 				}
 			}
 			
-			async setData() {
-				const json = await getDomainData(this.familyId);
-				console.log(json)
+			async setData() {	
+				const response = await fetch(`https://overprot.ncbr.muni.cz/data/db/families/${this.familyId}/domains.json`);
+				const json = await response.json();
 				const currentDomainData = json.filter(d => d.domain === this.domainId)[0];
 				this.pdbId = currentDomainData['pdb'];
 				this.structAsymId = currentDomainData['chain_id'];
 				this.authAsymId = currentDomainData['auth_chain_id'];
+			}
+			
+			populateSelectEle(ele, optionsArr) {
+				ele.options.length = 0;
+				for (let item of optionsArr) {
+					$(ele).append(new Option(item, item))
+				}
+				$(ele).selectpicker('refresh');
+			}
+			
+			bindFormSubmitListener() {
+				const _this = this;
+				this.familyAndDomainForm.addEventListener('submit', (event) => {
+					event.preventDefault();
+					try {
+						const requestedUrl = new URL(_this.currentUrl);
+						requestedUrl.searchParams.set('family_id', _this.familiesSelectEle.value);
+						requestedUrl.searchParams.set('domain_id', _this.domainsSelectEle.value);
+						window.location.href = requestedUrl.href;
+					} catch (error) {
+						throw new Error(error.message);
+					}
+				});
 			}
 			
 			render3D() {
@@ -316,11 +345,79 @@
 				container.innerHTML = html;
 			}
 			
+			async loadFamiliesSelectOptions() {
+				// Get txt from overprot API
+				const response = await fetch('https://overprot.ncbr.muni.cz/data/db/families.txt');
+				const txt = await response.text();
+				// Parse txt to get arr with family IDs
+				const options = txt.replace(/\r/g, "").split(/\n/);
+				// Populate familiesSelectEle with that arr
+				const ele = this.familiesSelectEle;
+				this.populateSelectEle(ele, options);
+				return $(ele);
+			}
 			
+			async loadDomainsSelectOptions(familyId) {
+				// Get json from overprot API
+				const response = await fetch(`https://overprot.ncbr.muni.cz/data/db/families/${familyId}/domains.json`);
+				const json = await response.json();
+				// Parse json to get arr with domain IDs
+				const options = json.map(domain => domain.domain);
+				// Populate domainsSelectEle with that arr
+				const ele = this.domainsSelectEle;
+				this.populateSelectEle(ele, options);
+				return $(ele);
+			}
 		}
 		
 		const instance = new IntegratedViewer();
 		instance.parseUrl();
+		instance.bindFormSubmitListener();
+		
+		// on programmatic or user change of families selector, load domains select options and set value (either [0] or instance.domainId if page is with query params)
+		$(instance.familiesSelectEle).on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
+			// console.log(e, clickedIndex, isSelected, previousValue);
+			const ele = $(instance.domainsSelectEle);
+			const selectedFamilyId = $(this).selectpicker('val');
+			instance.loadDomainsSelectOptions(selectedFamilyId).then(() => {
+				// if it was programmatic change && if it is a wellcome page OR if it was the user's change => select first domain in the list
+				if ((clickedIndex === null && instance.wellcomePage) || clickedIndex) {
+					// select [0] and refresh.....
+					const defaultOption = ele[0].options[0].value;
+					ele.selectpicker('val', defaultOption);
+					ele.selectpicker('refresh');
+					ele.selectpicker('refresh');
+					instance.submitButton.disabled = false;
+					// console.log('select [0]', ele, defaultOption);
+				// if it was a programmatic change (on page with query params we set selectors values equal to that params)
+				} else if (clickedIndex === null && !instance.wellcomePage) {
+					// select instance.domainId and refresh.....
+					ele.selectpicker('val', instance.domainId);
+					ele.selectpicker('refresh');
+					ele.selectpicker('refresh');
+					instance.submitButton.disabled = false;
+					// console.log('select instance.domainId', ele, instance.domainId);
+				}
+			});
+		});
+		
+		instance.loadFamiliesSelectOptions().then(() => {
+			const ele = $(instance.familiesSelectEle);
+			if (instance.wellcomePage) {
+				// select [0] and refresh.....
+				const defaultOption = ele[0].options[0].value;
+				ele.selectpicker('val', defaultOption);
+				ele.selectpicker('refresh');
+				ele.selectpicker('refresh');
+				// console.log('select [0]', ele, defaultOption);
+			} else {
+				// select instance.familyId and refresh.....
+				ele.selectpicker('val', instance.familyId);
+				ele.selectpicker('refresh');
+				ele.selectpicker('refresh');
+				// console.log('select instance.domainId', ele, instance.domainId);
+			}
+		})
 		
 		if (!instance.wellcomePage) {
 			document.addEventListener('DOMContentLoaded', () => {
@@ -333,64 +430,6 @@
 				});
 			});
 		}		
-		// TODO: add some content specific to wellcome page
-		
-		function loadFamiliesFile() {
-			const path = "https://overprot.ncbr.muni.cz/data/db/families.txt";
-			let content = "";
-			let request = new XMLHttpRequest();
-			request.onreadystatechange = function() {
-				if (request.readyState == 4 && request.status == 200) {
-					content = String(request.responseText);
-				}
-			}
-			request.open("GET", path, false);
-			request.overrideMimeType("text/html");
-			request.send();
-			
-			const arr = content.replace(/\r/g, "").split(/\n/);
-			return arr;
-		}
-		
-		function generateDatalist(arr, datalistEle) {
-			datalistEle.innerHTML = '';
-			for (let i in arr) {
-				datalistEle.appendChild(new Option(arr[i], arr[i]));
-			}
-		}
-		
-		async function getDomainData(familyId) {
-				// TODO: error handling (e.g. non-existing familyId)
-				//CATH family ID, e.g. 1.10.630.10
-				const url = `https://overprot.ncbr.muni.cz/data/db/families/${familyId}/domains.json`;
-				const response = await fetch(url);
-				const json = await response.json();
-				console.log(json);
-				return json;
-		}
-		
-		async function getDomainsOptions(familyId) {
-			const json = await getDomainData(familyId);		
-			const arr = json.map(domain => domain.domain);
-			<!-- console.log(arr); -->
-			const datalistEle = document.getElementById('domainsDatalist');
-			
-			generateDatalist(arr, datalistEle);
-			return json;
-		}
-		
-		generateDatalist(loadFamiliesFile(), document.getElementById("familiesDatalist"));
-		
-		const familiesSelector = document.getElementById('familiesSelector');
-		const domainsSelector = document.getElementById('domainsSelector');
-		familiesSelector.addEventListener('change', function(event) {
-			console.log(event.target.value);
-			domainsSelector.value = '';
-			getDomainsOptions(event.target.value);
-		});
-		
-		<!-- Mol* and OverProt part -->
-		
 		
 		
 		<!-- Topology Viewer (2D) part -->
