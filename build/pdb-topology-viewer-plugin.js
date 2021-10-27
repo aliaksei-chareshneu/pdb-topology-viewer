@@ -421,6 +421,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         this.familyId = options.familyId;
         // we need this as well for doing proper requests to 2DProts API
         this.structAsymId = options.structAsymId;
+        // we need this to construct url to 2DProts API
+        this.twoDProtsTimestamp = options.twoDProtsTimestamp;
         // TODO: Investigate what it does to undertand what entityId to write to converted JSON (always 1, or 1 if chain A, 2 if B etc.)
         //If chain id is not provided then get best chain id from observed residues api
         if (typeof options.chainId == 'undefined' || options.chainId == null) {
@@ -444,7 +446,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         var _this_1 = this;
         var _this = this;
         // console.log(this.entryId, this.chainId, this.familyId, this.domainId);
-        this.getApiData(this.entryId, this.entityId, this.chainId, this.familyId, this.domainId, this.structAsymId).then(function (result) {
+        this.getApiData(this.entryId, this.entityId, this.chainId, this.familyId, this.domainId, this.structAsymId, this.twoDProtsTimestamp).then(function (result) {
             if (result) {
                 result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], _this_1.entryId, _this_1.entityId, _this_1.chainId);
                 console.log(result[2]);
@@ -518,7 +520,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             });
         });
     };
-    PdbTopologyViewerPlugin.prototype.getApiData = function (pdbId, entityId, chainId, familyId, domainId, structAsymId) {
+    PdbTopologyViewerPlugin.prototype.getApiData = function (pdbId, entityId, chainId, familyId, domainId, structAsymId, twoDProtsTimestamp) {
         return __awaiter(this, void 0, void 0, function () {
             var twoDprotsDomainId, dataUrls;
             return __generator(this, function (_a) {
@@ -545,7 +547,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                     // NOT VERY MUCH WORKING (2021-10... problem?)
                     // currently works only for 2.40.160.10 family, tried several domains from domains list for that family that was obtained from overprot
                     // What is 00 before .json? Is it entityId? 00=1? Probably not
-                    "https://2dprots.ncbr.muni.cz/static/web/generated-" + familyId + "/2021-10-04T16_42_52_718294304_02_00/image-" + twoDprotsDomainId + ".json",
+                    "https://2dprots.ncbr.muni.cz/static/web/generated-" + familyId + "/" + twoDProtsTimestamp + "/image-" + twoDprotsDomainId + ".json",
                     // `https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T11_52_33_653629990_02_00/image-${twoDprotsDomainId}.json`,
                     // `https://2dprots.ncbr.muni.cz/static/web/generated-2.70.170.10/2021-10-04T11_15_36_727366416_02_00/image-2bg9_A01.json`,
                     // For the generalized redirect version below:
@@ -1528,7 +1530,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 .attr('stroke-opacity', strokeOpacity)
                 .attr('stroke-width', strokeWidth)
                 // mask to make shape fit strands arrow shape
-                // do not work well, need to investigate later
+                // does not work well, need to investigate later
                 // .attr('mask', 'url(#residueHighlight3Dto2DMask)')
                 .on('mouseover', function (d) { _this.mouseoverAction(residueEleNode, residueEleData[0]); })
                 .on('mousemove', function (d) { _this.mouseoverAction(residueEleNode, residueEleData[0]); })

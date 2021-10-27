@@ -305,6 +305,8 @@ class PdbTopologyViewerPlugin {
 	domainId: string;
 	structAsymId: string;
 	
+	twoDProtsTimestamp: string,
+	
     sequenceArr: string[];
     entityId: string;
     entryId: string;
@@ -332,7 +334,7 @@ class PdbTopologyViewerPlugin {
     subscribeEvents = true;
 
     // Not used here
-    render(target: HTMLElement, options:{domainId: string, familyId: string, entityId: string, entryId: string, chainId?: string, structAsymId?: string, subscribeEvents?:boolean, displayStyle?: string, errorStyle?: string, menuStyle?: string}) {
+    render(target: HTMLElement, options:{domainId: string, familyId: string, entityId: string, entryId: string, chainId?: string, structAsymId?: string, twoDProtsTimestamp?: string, subscribeEvents?:boolean, displayStyle?: string, errorStyle?: string, menuStyle?: string}) {
         if(options && typeof options.displayStyle != 'undefined' && options.displayStyle != null) this.displayStyle += options.displayStyle;
         if(options && typeof options.errorStyle != 'undefined' && options.errorStyle != null) this.errorStyle += options.errorStyle;
         if(options && typeof options.menuStyle != 'undefined' && options.menuStyle != null) this.menuStyle += options.menuStyle;
@@ -349,6 +351,8 @@ class PdbTopologyViewerPlugin {
 		this.familyId = options.familyId;
 		// we need this as well for doing proper requests to 2DProts API
 		this.structAsymId = options.structAsymId;
+		// we need this to construct url to 2DProts API
+		this.twoDProtsTimestamp = options.twoDProtsTimestamp;
         
         // TODO: Investigate what it does to undertand what entityId to write to converted JSON (always 1, or 1 if chain A, 2 if B etc.)
         //If chain id is not provided then get best chain id from observed residues api
@@ -372,7 +376,7 @@ class PdbTopologyViewerPlugin {
     initPainting(){
 		const _this = this;
 		// console.log(this.entryId, this.chainId, this.familyId, this.domainId);
-        this.getApiData(this.entryId, this.entityId, this.chainId, this.familyId, this.domainId, this.structAsymId).then(result => {
+        this.getApiData(this.entryId, this.entityId, this.chainId, this.familyId, this.domainId, this.structAsymId, this.twoDProtsTimestamp).then(result => {
             if(result){
                 result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], this.entryId, this.entityId, this.chainId);
 				console.log(result[2])
@@ -460,7 +464,7 @@ class PdbTopologyViewerPlugin {
         }
     }
 
-    async getApiData(pdbId: string, entityId: string, chainId: string, familyId: string, domainId: string, structAsymId: string) {
+    async getApiData(pdbId: string, entityId: string, chainId: string, familyId: string, domainId: string, structAsymId: string, twoDProtsTimestamp: string) {
         // const dataUrls = [
         //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
         //     `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
@@ -494,7 +498,7 @@ class PdbTopologyViewerPlugin {
 			// NOT VERY MUCH WORKING (2021-10... problem?)
 			// currently works only for 2.40.160.10 family, tried several domains from domains list for that family that was obtained from overprot
 			// What is 00 before .json? Is it entityId? 00=1? Probably not
-			`https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T16_42_52_718294304_02_00/image-${twoDprotsDomainId}.json`,
+			`https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/${twoDProtsTimestamp}/image-${twoDprotsDomainId}.json`,
 			// `https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T11_52_33_653629990_02_00/image-${twoDprotsDomainId}.json`,
 			// `https://2dprots.ncbr.muni.cz/static/web/generated-2.70.170.10/2021-10-04T11_15_36_727366416_02_00/image-2bg9_A01.json`,
 			// For the generalized redirect version below:

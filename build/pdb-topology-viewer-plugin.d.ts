@@ -36,6 +36,7 @@ declare class PdbTopologyViewerPlugin {
     familyId: string;
     domainId: string;
     structAsymId: string;
+    twoDProtsTimestamp: string;
     sequenceArr: string[];
     entityId: string;
     entryId: string;
@@ -63,6 +64,7 @@ declare class PdbTopologyViewerPlugin {
         entryId: string;
         chainId?: string;
         structAsymId?: string;
+        twoDProtsTimestamp?: string;
         subscribeEvents?: boolean;
         displayStyle?: string;
         errorStyle?: string;
@@ -72,7 +74,7 @@ declare class PdbTopologyViewerPlugin {
     displayError(errType?: string): void;
     createNewEvent: (eventTypeArr: string[]) => any;
     getObservedResidues(pdbId: string): Promise<any>;
-    getApiData(pdbId: string, entityId: string, chainId: string, familyId: string, domainId: string, structAsymId: string): Promise<any[]>;
+    getApiData(pdbId: string, entityId: string, chainId: string, familyId: string, domainId: string, structAsymId: string, twoDProtsTimestamp: string): Promise<any[]>;
     getPDBSequenceArray(entities: any[]): void;
     chunkArray(arr: any[], len: number): any[][];
     getDomainRange(): void;

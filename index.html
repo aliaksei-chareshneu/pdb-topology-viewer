@@ -123,11 +123,13 @@
 				this.familyId;
 				// the one that is used by overprot! not by 2dprots
 				this.domainId;
+				this.twoDprotsDomainId;
+				this.twoDProtsTimestamp;
+				
 				this.pdbId;
 				this.structAsymId;
 				this.authAsymId;
-				// TODO: determine!
-				this.entityId = '1';
+				this.entityId;
 				
 				this.familyAndDomainForm = document.getElementById('familyAndDomainForm');
 				this.familiesSelectEle = document.getElementById('familiesSelector');
@@ -157,15 +159,28 @@
 				// in overprot API chain_id corresponds to struct_asym_id (PDBeAPI)
 				this.structAsymId = currentDomainData['chain_id'];
 				this.authAsymId = currentDomainData['auth_chain_id'];
+				// assembling twoDprotsDomainId
+				this.twoDprotsDomainId = `${this.domainId.slice(0, 4)}${this.structAsymId}${this.domainId.slice(5)}`;
 				
-				const rangesResponse = await fetch(`https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${this.pdbId}/chain/${this.authAsymId}`);
+				const [twoDprotsResponse, rangesResponse] = await Promise.all([
+					fetch(`https://2dprots.ncbr.muni.cz/domain/${this.twoDprotsDomainId}`),
+					fetch(`https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${this.pdbId}/chain/${this.authAsymId}`)
+				]);
+				
+				// Approach with parsing HTML from 2DProts is more universal, but still does not work for all, e.g. family_id=2.60.40.10&domain_id=12e8H01 gets correct timestamp, using which svg is accesible, but json - not (just changing .svg to .json at the end of link)
+				const twoDProtsHTML = await twoDprotsResponse.text();
+				const parser = new DOMParser();
+				const doc = parser.parseFromString(twoDProtsHTML, 'text/html');
+				console.log(doc);
+				const anchorWithSVGLink = doc.querySelector('a[href$=".svg"]');
+				this.twoDProtsTimestamp = anchorWithSVGLink.href.split('/').splice(-2, 1);
+				
 				const ranges = await rangesResponse.json();
 				if (ranges[this.pdbId].molecules.length > 1) {
 					console.error('entityId determination based on chainId and entryId may be wrong: there is several molecules in ranges API response');
 					console.log(ranges);
 				}
 				this.entityId = ranges[this.pdbId].molecules[0].entity_id;
-				console.log(ranges);
 			}
 			
 			populateSelectEle(ele, optionsArr) {
@@ -326,6 +341,7 @@
 					  structAsymId: this.structAsymId,
 					  familyId:	this.familyId,
 					  domainId: this.domainId,
+					  twoDProtsTimestamp: this.twoDProtsTimestamp,
 					  // entryId: '1akd',
 					  // entityId: '1',
 					  // chainId: 'A',
