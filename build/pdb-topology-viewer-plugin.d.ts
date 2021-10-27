@@ -19,7 +19,7 @@ declare function applyRotationMatrix(point: any, center: any, angle: any): {
 declare function composePathHelix(center: any, MINORAXIS: any, sse: any, CONVEXITY: any): any[];
 declare function composePathStrand(center: any, MINORAXIS: any, sse: any, ARROW_HEIGHT: any, ARROW_SPREAD: any): any[];
 declare function convertPathCartesianToYReversed(pathCartesian: any, lowerLeft: any, upperRight: any): any;
-declare function convert2DProtsJSONtoTopologyAPIJSON(inputJson: any, entryID: any, chainID: any): {};
+declare function convert2DProtsJSONtoTopologyAPIJSON(inputJson: any, entryID: any, entityID: any, chainID: any): {};
 declare class PdbTopologyViewerPlugin {
     defaultColours: {
         domainSelection: string;
@@ -35,6 +35,7 @@ declare class PdbTopologyViewerPlugin {
     menuStyle: string;
     familyId: string;
     domainId: string;
+    structAsymId: string;
     sequenceArr: string[];
     entityId: string;
     entryId: string;
@@ -61,6 +62,7 @@ declare class PdbTopologyViewerPlugin {
         entityId: string;
         entryId: string;
         chainId?: string;
+        structAsymId?: string;
         subscribeEvents?: boolean;
         displayStyle?: string;
         errorStyle?: string;
@@ -70,7 +72,7 @@ declare class PdbTopologyViewerPlugin {
     displayError(errType?: string): void;
     createNewEvent: (eventTypeArr: string[]) => any;
     getObservedResidues(pdbId: string): Promise<any>;
-    getApiData(pdbId: string, chainId: string, familyId: string, domainId: string): Promise<any[]>;
+    getApiData(pdbId: string, entityId: string, chainId: string, familyId: string, domainId: string, structAsymId: string): Promise<any[]>;
     getPDBSequenceArray(entities: any[]): void;
     chunkArray(arr: any[], len: number): any[][];
     getDomainRange(): void;

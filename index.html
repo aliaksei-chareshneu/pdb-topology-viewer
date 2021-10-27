@@ -121,6 +121,7 @@
 				this.wellcomePage = true;
 				this.currentUrl = new URL(window.location.href);
 				this.familyId;
+				// the one that is used by overprot! not by 2dprots
 				this.domainId;
 				this.pdbId;
 				this.structAsymId;
@@ -147,12 +148,24 @@
 			}
 			
 			async setData() {	
-				const response = await fetch(`https://overprot.ncbr.muni.cz/data/db/families/${this.familyId}/domains.json`);
-				const json = await response.json();
-				const currentDomainData = json.filter(d => d.domain === this.domainId)[0];
+				// domains we need to get current domain data, ranges - to get entityId from chainId (=== chain_id(PDBeAPI))
+				const domainsResponse = await fetch(`https://overprot.ncbr.muni.cz/data/db/families/${this.familyId}/domains.json`);
+				const domains = await domainsResponse.json();
+				
+				const currentDomainData = domains.filter(d => d.domain === this.domainId)[0];
 				this.pdbId = currentDomainData['pdb'];
+				// in overprot API chain_id corresponds to struct_asym_id (PDBeAPI)
 				this.structAsymId = currentDomainData['chain_id'];
 				this.authAsymId = currentDomainData['auth_chain_id'];
+				
+				const rangesResponse = await fetch(`https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${this.pdbId}/chain/${this.authAsymId}`);
+				const ranges = await rangesResponse.json();
+				if (ranges[this.pdbId].molecules.length > 1) {
+					console.error('entityId determination based on chainId and entryId may be wrong: there is several molecules in ranges API response');
+					console.log(ranges);
+				}
+				this.entityId = ranges[this.pdbId].molecules[0].entity_id;
+				console.log(ranges);
 			}
 			
 			populateSelectEle(ele, optionsArr) {
@@ -209,7 +222,10 @@
 				Promise.all([loadComplete, twoDProtsApiDataObtained]).then(() => {
 					console.log('both api data and 3d are ready')
 					const targetChainSelection = [{
-						struct_asym_id: _this.structAsymId, 
+						// technically struct_asym_id corresponds to _this.structAsymId, and auth_asym_id - to _this.authAsymId, but better to uniformly use one everywhere, and TopologyViewer event returns only auth...
+						// struct_asym_id: _this.structAsymId,
+						// as auth_asym_id (mmCIF) === chain_id (PDBeAPI) === chainId internally used in TopologyViewer code
+						auth_asym_id: _this.authAsymId,
 						color:{r:255,g:255,b:255},
 						focus: true,
 						// For selecting just the domain of interest
@@ -223,7 +239,8 @@
 				document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
 					viewerInstance.visual.highlight({ data: [{
 						// entity_id: event.eventData['entityId'],
-						struct_asym_id: event.eventData['chainId'],
+						// as auth_asym_id (mmCIF) === chain_id (PDBeAPI) === chainId internally used in TopologyViewer code
+						auth_asym_id: event.eventData['chainId'],
 						residue_number: event.eventData['residueNumber'],
 					}], color: {r:255,g:0,b:0},});
 				});
@@ -263,10 +280,11 @@
 							<!-- Checking if this SSE exists in 2D view -->
 							if (data[0]) {
 								const molstarSelectionData = {
-								entity_id: data[0].proteinData.entityId,
-								struct_asym_id: data[0].proteinData.chainId,
-								start_residue_number: data[0].start,
-								end_residue_number: data[0].stop,
+									entity_id: data[0].proteinData.entityId,
+									// as auth_asym_id (mmCIF) === chain_id (PDBeAPI) === chainId internally used in TopologyViewer code
+									auth_asym_id: data[0].proteinData.chainId,
+									start_residue_number: data[0].start,
+									end_residue_number: data[0].stop,
 								};
 								return molstarSelectionData;
 							} else {
@@ -298,11 +316,14 @@
 					this.plugins.twoD.instance = pluginInstance;
 					//Get element from HTML/Template to place the view
 					const viewContainer = document.getElementById('pdb-topology-viewer');
-					console.log(this.pdbId, this.entityId, this.structAsymId, this.familyId, this.domainId)
+					console.log(this.pdbId, this.entityId, this.authAsymId, this.familyId, this.domainId)
 					const options = {
 					  entryId: this.pdbId,
 					  entityId: this.entityId,
-					  chainId: this.structAsymId,
+					  // as auth_asym_id (mmCIF) === chain_id (PDBeAPI) === chainId internally used in TopologyViewer code
+					  chainId: this.authAsymId,
+					  // structAsymId should be provided as well as we actually need to request 2DProts layout data based on structAsymId from withing TopologyViewer, BUT TopologyViewer itself uses auth_asym_id === chain_id === chainId (internally)
+					  structAsymId: this.structAsymId,
 					  familyId:	this.familyId,
 					  domainId: this.domainId,
 					  // entryId: '1akd',

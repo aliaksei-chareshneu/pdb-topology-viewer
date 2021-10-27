@@ -142,7 +142,7 @@ function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
 // TODO: Check if residues from some of 5 used APIs correspond to what is in 2DProts
 // TODO: Write better function description
 // Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
-function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
+function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chainID) {
 	// TODO: try different for both if something goes wrong
 	// const MINORAXIS = 3 * 2;
 	// const CONVEXITY = 2;
@@ -168,13 +168,15 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 		'x': inputJson.metadata['lower_left'][0],
 		'y': inputJson.metadata['lower_left'][1]
 	};
-	
-	console.log(upperRight, lowerLeft);
 		
 	const outputJSON = {};
-	// TODO: check if entityId (i.e. '1') should be determined in some way (e.g. if chainID = A, entityID = 1, if B => 2, etc.)
-	outputJSON[entryID] = {'1': {}};
-	outputJSON[entryID]['1'][chainID] = {
+	// TODO: check if entityId (i.e. '1') should be determined in some way
+	// outputJSON[entryID] = {'1': {}};
+	outputJSON[entryID] = {[entityID]: {}};
+	console.log(outputJSON);
+	// chainID is chainId internally used by TopologyViewer, as it will be used in drawTopologyStructures to access that topology data, and we here emulate the response of PDBe topology API
+	// outputJSON[entryID]['1'][chainID] = {
+	outputJSON[entryID][entityID][chainID] = {
 		'helices': [],
 		'coils': [],
 		'strands': [],
@@ -227,7 +229,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 			topologyData.startCoord.x = topologyData.path[8];
 			topologyData.startCoord.y = topologyData.path[9];
 			
-			outputJSON[entryID]['1'][chainID].helices.push(topologyData);
+			outputJSON[entryID][entityID][chainID].helices.push(topologyData);
 		} else if (STRANDS_CHARS.indexOf(sseType) > -1) {
 			const pathCartesian = composePathStrand(center, MINORAXIS, sse, ARROW_HEIGHT, ARROW_SPREAD);
 			topologyData.path = convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight);
@@ -236,13 +238,13 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, chainID) {
 			topologyData.stopCoord.x = topologyData.path[6];
 			topologyData.stopCoord.y = topologyData.path[7];
 			
-			outputJSON[entryID]['1'][chainID].strands.push(topologyData);
+			outputJSON[entryID][entityID][chainID].strands.push(topologyData);
 		} else {
 			console.error('Unknown SSE type!');
 		}
 	}
 	// separate array for calculating coils data
-	const helicesAndSheets = [...outputJSON[entryID]['1'][chainID].helices, ...outputJSON[entryID]['1'][chainID].strands];
+	const helicesAndSheets = [...outputJSON[entryID][entityID][chainID].helices, ...outputJSON[entryID][entityID][chainID].strands];
 	helicesAndSheets.sort((a, b) => a.stop < b.start ? -1 : 1);
 	console.log(`Sorted helicesAndSheets array`);
 	console.log(helicesAndSheets);
@@ -301,6 +303,8 @@ class PdbTopologyViewerPlugin {
 	
 	familyId: string;
 	domainId: string;
+	structAsymId: string;
+	
     sequenceArr: string[];
     entityId: string;
     entryId: string;
@@ -328,7 +332,7 @@ class PdbTopologyViewerPlugin {
     subscribeEvents = true;
 
     // Not used here
-    render(target: HTMLElement, options:{domainId: string, familyId: string, entityId: string, entryId: string, chainId?: string, subscribeEvents?:boolean, displayStyle?: string, errorStyle?: string, menuStyle?: string}) {
+    render(target: HTMLElement, options:{domainId: string, familyId: string, entityId: string, entryId: string, chainId?: string, structAsymId?: string, subscribeEvents?:boolean, displayStyle?: string, errorStyle?: string, menuStyle?: string}) {
         if(options && typeof options.displayStyle != 'undefined' && options.displayStyle != null) this.displayStyle += options.displayStyle;
         if(options && typeof options.errorStyle != 'undefined' && options.errorStyle != null) this.errorStyle += options.errorStyle;
         if(options && typeof options.menuStyle != 'undefined' && options.menuStyle != null) this.menuStyle += options.menuStyle;
@@ -343,6 +347,8 @@ class PdbTopologyViewerPlugin {
         this.entryId = options.entryId.toLowerCase();
 		this.domainId = options.domainId;
 		this.familyId = options.familyId;
+		// we need this as well for doing proper requests to 2DProts API
+		this.structAsymId = options.structAsymId;
         
         // TODO: Investigate what it does to undertand what entityId to write to converted JSON (always 1, or 1 if chain A, 2 if B etc.)
         //If chain id is not provided then get best chain id from observed residues api
@@ -366,9 +372,9 @@ class PdbTopologyViewerPlugin {
     initPainting(){
 		const _this = this;
 		// console.log(this.entryId, this.chainId, this.familyId, this.domainId);
-        this.getApiData(this.entryId, this.chainId, this.familyId, this.domainId).then(result => {
+        this.getApiData(this.entryId, this.entityId, this.chainId, this.familyId, this.domainId, this.structAsymId).then(result => {
             if(result){
-                result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], this.entryId, this.chainId);
+                result[2] = convert2DProtsJSONtoTopologyAPIJSON(result[2], this.entryId, this.entityId, this.chainId);
 				console.log(result[2])
                 //Validate required data in the API result set (0, 2, 4)
                 if(typeof result[0] == 'undefined' || typeof result[2] == 'undefined' || typeof result[4] == 'undefined'){ 
@@ -454,7 +460,7 @@ class PdbTopologyViewerPlugin {
         }
     }
 
-    async getApiData(pdbId: string, chainId: string, familyId: string, domainId: string) {
+    async getApiData(pdbId: string, entityId: string, chainId: string, familyId: string, domainId: string, structAsymId: string) {
         // const dataUrls = [
         //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
         //     `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
@@ -462,7 +468,10 @@ class PdbTopologyViewerPlugin {
         //     `https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
         //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         // ]
-		const twoDprotsDomainId = `${domainId.slice(0, 4)}_${domainId.slice(4)}`
+		// we take first 4 characters from Overprot domain ID, add "_", add structAsymId (as 2DProts relies on it), and add the rest of domainId
+		const twoDprotsDomainId = `${domainId.slice(0, 4)}_${structAsymId}${domainId.slice(5)}`;
+		// VERSION WITHOUT UNDERSCORE IF REDIRECTS TO 2DPROTS API WILL WORK
+		// const twoDprotsDomainId = `${domainId.slice(0, 4}${structAsymId}${domainId.slice(5)}`
         const dataUrls = [
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
@@ -485,11 +494,12 @@ class PdbTopologyViewerPlugin {
 			// NOT VERY MUCH WORKING (2021-10... problem?)
 			// currently works only for 2.40.160.10 family, tried several domains from domains list for that family that was obtained from overprot
 			// What is 00 before .json? Is it entityId? 00=1? Probably not
-			`https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T11_52_33_653629990_02_00/image-${twoDprotsDomainId}.json`,
+			`https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T16_42_52_718294304_02_00/image-${twoDprotsDomainId}.json`,
+			// `https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T11_52_33_653629990_02_00/image-${twoDprotsDomainId}.json`,
 			// `https://2dprots.ncbr.muni.cz/static/web/generated-2.70.170.10/2021-10-04T11_15_36_727366416_02_00/image-2bg9_A01.json`,
 			// For the generalized redirect version below:
 			// Access to fetch at 'http://2dprots.ncbr.muni.cz/files/domain/2bg9A01/json' (redirected from 'https://2dprots.ncbr.muni.cz/files/domain/2bg9A01/latest/json') from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
-			// `https://2dprots.ncbr.muni.cz/files/domain/${domainId}/latest/json`,
+			// `https://2dprots.ncbr.muni.cz/files/domain/${twoDprotsDomainId}/latest/json`,
 			`https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         ]
@@ -1591,7 +1601,7 @@ class PdbTopologyViewerPlugin {
                     .attr('stroke-opacity', strokeOpacity)
                     .attr('stroke-width', strokeWidth)
 					// mask to make shape fit strands arrow shape
-					// do not work well, need to investigate later
+					// does not work well, need to investigate later
 					// .attr('mask', 'url(#residueHighlight3Dto2DMask)')
                     .on('mouseover', (d: any) => { _this.mouseoverAction(residueEleNode, residueEleData[0]); })
                     .on('mousemove', (d: any) => { _this.mouseoverAction(residueEleNode, residueEleData[0]); })
@@ -2050,7 +2060,7 @@ class PdbTopologyViewerPlugin {
             if(e.eventData.entry_id.toLowerCase() != this.entryId.toLowerCase() || e.eventData.entity_id != this.entityId) return;								
             
             //Abort if chain id is different
-            if(e.eventData.label_asym_id.toLowerCase() != this.chainId.toLowerCase()) return;
+            // if(e.eventData.label_asym_id.toLowerCase() != this.chainId.toLowerCase()) return;
 
             //Apply new selection
             this.highlight(e.eventData.seq_id, e.eventData.seq_id, undefined, eType);
