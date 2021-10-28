@@ -396,13 +396,28 @@
 			
 			async loadDomainsSelectOptions(familyId) {
 				// Get json from overprot API
-				const response = await fetch(`https://overprot.ncbr.muni.cz/data/db/families/${familyId}/domains.json`);
-				const json = await response.json();
+				const responseOverprotDomains = await fetch(`https://overprot.ncbr.muni.cz/data/db/families/${familyId}/domains.json`);
+				const overprotDomains = await responseOverprotDomains.json();
+				
+				// Potentially both domain lists from Overprot and 2DProts are consistent
+				// If not, implement these: get two lists, and remove from Overprot list whatever is not in 2DProts list
+				// You need to also request for a timestamp for that family before requesting the list from 2DProts
+				// Plan:
+				// 1. parallel request via Promise.all for overprot list and 2DProts HTML for that family
+				// 2. parsing 2DProts HTML to get timestamp for that family
+				// 3. request to 2DProts domain_list for that family using obtained timestamp
+				// 4. remove from Overprot list whatever is not in 2DProts list
+				// TODO TRY CATCH - if cannot find domain_list, leave options as from overprot
+				// const responseTwoDProtsDomains = await fetch(`https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T11_52_33_653629990_02_00/domain_list.txt`);
+				// const twoDProtsDomains = await responseTwoDProtsDomains.text();
+				// const twoDProtsOptions = twoDProtsDomains.replace(/\r/g, "").split(/\n/);
+				
 				// Parse json to get arr with domain IDs
-				const options = json.map(domain => domain.domain);
+				const overprotOptions = overprotDomains.map(domain => domain.domain);
+				
 				// Populate domainsSelectEle with that arr
 				const ele = this.domainsSelectEle;
-				this.populateSelectEle(ele, options);
+				this.populateSelectEle(ele, overprotOptions);
 				return $(ele);
 			}
 		}
