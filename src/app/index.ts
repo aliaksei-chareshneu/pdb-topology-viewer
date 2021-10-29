@@ -173,6 +173,15 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 	// TODO: check if entityId (i.e. '1') should be determined in some way
 	// outputJSON[entryID] = {'1': {}};
 	outputJSON[entryID] = {[entityID]: {}};
+	// maximum vertical and horizontal dimensions of canvas (based on the upper_right and lower_left coordinates), and those co for proper scaling in getDomainRange()
+	outputJSON.ranges = {
+		'x': Math.abs(upperRight.x) + Math.abs(lowerLeft.x),
+		'y': Math.abs(upperRight.y) + Math.abs(lowerLeft.y),
+		// convertPathCartesianToYReversed returns array with odd items corresponding to X coords and even items corresponding to Y coords
+		// in this case [XCOORD, YCOORD]
+		'upperRight': convertPathCartesianToYReversed([upperRight.x, upperRight.y], lowerLeft, upperRight),
+		'lowerLeft': convertPathCartesianToYReversed([lowerLeft.x, lowerLeft.y], lowerLeft, upperRight),
+	}
 	console.log(outputJSON);
 	// chainID is chainId internally used by TopologyViewer, as it will be used in drawTopologyStructures to access that topology data, and we here emulate the response of PDBe topology API
 	// outputJSON[entryID]['1'][chainID] = {
@@ -305,7 +314,7 @@ class PdbTopologyViewerPlugin {
 	domainId: string;
 	structAsymId: string;
 	
-	twoDProtsTimestamp: string,
+	twoDProtsTimestamp: string;
 	
     sequenceArr: string[];
     entityId: string;
@@ -325,8 +334,8 @@ class PdbTopologyViewerPlugin {
     scaledPointsArr: any[];
     domainTypes: any[];
 
-    // svgWidth = 100;
-	svgWidth = 128;
+    svgWidth = 100;
+	// svgWidth = 128;
     svgHeight = 100;
 
     svgEle: any;
@@ -560,17 +569,39 @@ class PdbTopologyViewerPlugin {
             }
                             
         };
+		
+		// for proper scaling
+		const ranges = this.apiData[2].ranges;
+		let xRange;
+		let yRange;
+		if (ranges.x >= ranges.y) {
+			// try 10, 90 to account for rotation
+			xRange = [1, this.svgWidth - 1];
+			yRange = [1, ranges.y * this.svgHeight / ranges.x];
+		} else if (ranges.x < ranges.y) {
+			xRange = [1, ranges.x * this.svgWidth / ranges.y];
+			yRange = [1, this.svgHeight - 1];
+		} else {
+			console.error('2Dprots canvas ranges issue')
+		}
+		
         // d3.scaleLinear creates function (e.g. called xScale) that maps domain to range
         // so that xScale(z) will yield the value from range corresponding to z
         // so in essence it is 'normalization' utility
         this.xScale = d3.scaleLinear()
-                        .domain([d3.min(allCordinatesArray, function(d) { return d[0]; }), d3.max(allCordinatesArray, function(d) { return d[0]; })])
-                        .range([1, this.svgWidth - 1]);
+                        // .domain([d3.min(allCordinatesArray, function(d) { return d[0]; }), d3.max(allCordinatesArray, function(d) { return d[0]; })])
+						.domain([ranges.lowerLeft[0], ranges.upperRight[0]])
+						// .range([1, this.svgWidth - 1]);
+						.range(xRange);
         
         this.yScale = d3.scaleLinear()
-                        .domain([d3.min(allCordinatesArray, function(d) { return d[1]; }), d3.max(allCordinatesArray, function(d) { return d[1]; })])
-                        .range([1, this.svgHeight - 1]);
-        
+                        // .domain([d3.min(allCordinatesArray, function(d) { return d[1]; }), d3.max(allCordinatesArray, function(d) { return d[1]; })])
+						// need to swap two array items, otherwise range is e.g. 56, 0 , i.e. reversed
+						.domain([ranges.upperRight[1], ranges.lowerLeft[1]])
+						// .domain([ranges.lowerLeft[1], ranges.upperRight[1]])
+						// .range([1, this.svgHeight - 1]);
+						.range(yRange);
+						
                         // apparently zoom behaviour
         this.zoom = d3.zoom()
                     .on("zoom", () => this.zoomDraw())
@@ -1201,13 +1232,13 @@ class PdbTopologyViewerPlugin {
 		// Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
 		// Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
 		// Also added another mask to make .residueHighlight paths appearing on 3D hover in 2D fit the shape of strand arrows
-        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 128 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;">
+        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;">
 			<defs>
 				<mask id="cutoutCoilsMask" maskUnits="userSpaceOnUse">
 					<rect
 						x="0"
 						y="0"
-						width="128"
+						width="100"
 						height="100"
 						fill="white" />
 				</mask>
@@ -1215,7 +1246,7 @@ class PdbTopologyViewerPlugin {
 					<rect
 						x="0"
 						y="0"
-						width="128"
+						width="100"
 						height="100"
 						fill="white" />
 				</mask>

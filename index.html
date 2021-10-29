@@ -50,20 +50,20 @@
 		
         #pdb-topology-viewer {
             position: relative;
-            width: calc(400px*1.28);
+            width: calc(400px*1.0);
             height: 400px;
-			margin-left: 50px;
+			margin-left: 0px;
         }
 		
 		#myViewer{
 			height: 400px;
-			margin-left: 50px;
+			/*margin-left: 50px;*/
 			width: 500px;
 			position: relative;
 		}
 		
 		#overprot-wrapper {
-			width: 1000px;
+			width: 900px;
 			height: 200px;
 		}
     </style>
@@ -383,22 +383,26 @@
 			}
 			
 			async loadFamiliesSelectOptions() {
+				console.log('families request sent');
 				// Get txt from overprot API
 				const response = await fetch('https://overprot.ncbr.muni.cz/data/db/families.txt');
 				const txt = await response.text();
+				console.log('families request parsed');
 				// Parse txt to get arr with family IDs
 				const options = txt.replace(/\r/g, "").split(/\n/);
 				// Populate familiesSelectEle with that arr
 				const ele = this.familiesSelectEle;
 				this.populateSelectEle(ele, options);
+				console.log('families select populated');
 				return $(ele);
 			}
 			
 			async loadDomainsSelectOptions(familyId) {
 				// Get json from overprot API
+				console.log('domains request sent');
 				const responseOverprotDomains = await fetch(`https://overprot.ncbr.muni.cz/data/db/families/${familyId}/domains.json`);
 				const overprotDomains = await responseOverprotDomains.json();
-				
+				console.log('domains request parsed');
 				// Potentially both domain lists from Overprot and 2DProts are consistent
 				// If not, implement these: get two lists, and remove from Overprot list whatever is not in 2DProts list
 				// You need to also request for a timestamp for that family before requesting the list from 2DProts
@@ -418,6 +422,7 @@
 				// Populate domainsSelectEle with that arr
 				const ele = this.domainsSelectEle;
 				this.populateSelectEle(ele, overprotOptions);
+				console.log('domains select populated');
 				return $(ele);
 			}
 		}
