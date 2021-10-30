@@ -2,8 +2,8 @@
 
   <head>
 	<!-- Molstar CSS & JS -->
-    <link crossorigin="anonymous"rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-1.1.0.css">
-    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-1.1.0.js"></script>
+    <link crossorigin="anonymous"rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-1.2.0.css">
+    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-1.2.0.js"></script>
 	
     <!-- d3.js dependency script -->
     <script src="https://cdn.jsdelivr.net/npm/d3@5.9.2"></script>
@@ -108,6 +108,26 @@
 	<!-- Fetching data for options in selectors -->
 	<script>
 	// (async () => {
+		// Converts color name ('grey', 'gray' will work) to HEX
+		function colorNameToHex(colorName){
+			const ctx = document.createElement('canvas').getContext('2d');
+			ctx.fillStyle = colorName;
+			return ctx.fillStyle;
+		}
+		
+		function hexToRgb(hex) {
+			// in case it is not hex, e.g. gray/grey sometimes occur in 2DProts layout JSON
+			if (hex[0] !== '#') {
+				hex = colorNameToHex(hex);
+			}
+			let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+			return result ? {
+				r: parseInt(result[1], 16),
+				g: parseInt(result[2], 16),
+				b: parseInt(result[3], 16)
+			} : null;
+		}
+		
 		class IntegratedViewer {
 			constructor() {
 				this.plugins = {
@@ -236,6 +256,18 @@
 				const _this = this;
 				Promise.all([loadComplete, twoDProtsApiDataObtained]).then(() => {
 					console.log('both api data and 3d are ready')
+					const allSSEs = _this.plugins.twoD.instance.twoDProtsData.topologyData.map((sse) => {
+						// coloring according to 2DProts colors (in the future - rainbow colors)
+						console.log(hexToRgb(sse.color))
+						return {
+							auth_asym_id: _this.authAsymId,
+							color: hexToRgb(sse.color),
+							// focus: true,
+							start_residue_number: sse.start,
+							end_residue_number: sse.stop,
+						}
+					});
+					console.log(allSSEs);
 					const targetChainSelection = [{
 						// technically struct_asym_id corresponds to _this.structAsymId, and auth_asym_id - to _this.authAsymId, but better to uniformly use one everywhere, and TopologyViewer event returns only auth...
 						// struct_asym_id: _this.structAsymId,
@@ -247,7 +279,9 @@
 						start_residue_number: _this.plugins.twoD.instance.twoDProtsData.residueNumbers.start,
 						end_residue_number: _this.plugins.twoD.instance.twoDProtsData.residueNumbers.stop,
 					}];
-					viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}});
+					viewerInstance.visual.select({data: targetChainSelection, nonSelectedColor: {r:16,g:16,b:16}}).then(() => {
+						viewerInstance.visual.select({ data: allSSEs, nonSelectedColor: {r:16,g:16,b:16}})
+					});
 				})
 				
 				// Upon user hover on Topology Component residue, highlight that residue in MolStar view
@@ -257,7 +291,7 @@
 						// as auth_asym_id (mmCIF) === chain_id (PDBeAPI) === chainId internally used in TopologyViewer code
 						auth_asym_id: event.eventData['chainId'],
 						residue_number: event.eventData['residueNumber'],
-					}], color: {r:255,g:0,b:0},});
+					}], color: {r:255,g:255,b:255},});
 				});
 				
 				document.addEventListener('PDB.topologyViewer.mouseout', (event) => {
@@ -311,7 +345,7 @@
 						molstarData = molstarData.filter(d => Object.keys(d).length !== 0);
 						console.log(molstarData);
 						
-						viewerInstance.visual.highlight({ data: molstarData, color: {r:255,g:0,b:0},});
+						viewerInstance.visual.highlight({ data: molstarData, color: {r:255,g:255,b:255},});
 						
 					} else {
 						<!-- empty detail.label arr => event was fired onmouseover/offhover -->
