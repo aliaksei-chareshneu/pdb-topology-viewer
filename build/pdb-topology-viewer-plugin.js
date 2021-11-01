@@ -1209,7 +1209,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         // Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
         // Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
         // Also added another mask to make .residueHighlight paths appearing on 3D hover in 2D fit the shape of strand arrows
-        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\">\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"userSpaceOnUse\">\n\t\t\t\t\t<rect\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t\t<mask id=\"residueHighlight3Dto2DMask\" maskUnits=\"userSpaceOnUse\">\n\t\t\t\t\t<rect\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
+        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\">\t\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t\t<mask id=\"residueHighlight3Dto2DMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
         this.svgEle = d3.select(this.targetEle).select('.topoSvg');
         this.getDomainRange();
         this.scaledPointsArr = [];
@@ -1336,7 +1336,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             // This leads to unability to highlight residues on strands/helices onhover
                             // .attr('fill', '#ffffff')
                             .attr('fill', 'none')
-                            .attr('stroke-width', 1.0)
+                            .attr('stroke-width', 0.5)
                             // .attr('stroke', this.defaultColours.borderColor)
                             .attr('stroke', secStrData.color)
                             // set id to later draw connecting coils
@@ -1396,6 +1396,19 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 return state_1.value;
         }
         ;
+        // Cut out all white space around SVG (necessary since in original 2DProts SVG and TopologyViewer SVGs drawn based on 2DProts JSON layout contains excessive white space around actual SSE diagram)
+        var bbox = this.svgEle.node().getBBox();
+        var viewBox = [bbox.x, bbox.y, bbox.width, bbox.height].join(' ');
+        this.svgEle.attr('viewBox', viewBox);
+        // For now white rects inside mask are bigger than 'zoomed-in' svg, the code below should make them equal size with svg viewBox
+        // But so far it worked well without it
+        // const maskRects = document.querySelectorAll('.maskRect');
+        // for (const rect of maskRects) {
+        // rect.setAttribute('x', bbox.x);
+        // rect.setAttribute('y', bbox.y);
+        // rect.setAttribute('height', bbox.height);
+        // rect.setAttribute('width', bbox.width);
+        // }
         //bring rsrz validation circles in front
         this.svgEle._groups[0][0].append(this.svgEle.selectAll('.validationResidue').node());
     };
