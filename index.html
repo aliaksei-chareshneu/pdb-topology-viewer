@@ -329,7 +329,7 @@
 							<!-- Checking if this SSE exists in 2D view -->
 							if (data[0]) {
 								const molstarSelectionData = {
-									entity_id: data[0].proteinData.entityId,
+									entity_id: data[0].proteinData.entityId.toString(),
 									// as auth_asym_id (mmCIF) === chain_id (PDBeAPI) === chainId internally used in TopologyViewer code
 									auth_asym_id: data[0].proteinData.chainId,
 									start_residue_number: data[0].start,
