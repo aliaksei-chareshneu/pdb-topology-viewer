@@ -143,6 +143,10 @@
 				this.familyId;
 				// the one that is used by overprot! not by 2dprots
 				this.domainId;
+				
+				this.defaultFamilyId = '2.160.10.30';
+				this.defaultDomainId = '3oh1A02';
+				
 				this.twoDprotsDomainId;
 				this.twoDProtsTimestamp;
 				
@@ -410,7 +414,7 @@
 			
 			render1D() {
 				<!-- Actually insert in HTML rather than render -->
-				const html = `<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-${this.familyId}.json' width=1800 height=300 color-method='type' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>`;
+				const html = `<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-${this.familyId}.json' width=1800 height=300 color-method='rainbow' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>`;
 				
 				const container = document.getElementById('overprot-wrapper');
 				container.innerHTML = html;
@@ -496,7 +500,8 @@
 			const ele = $(instance.familiesSelectEle);
 			if (instance.wellcomePage) {
 				// select [0] and refresh.....
-				const defaultOption = ele[0].options[0].value;
+				// const defaultOption = ele[0].options[0].value;
+				const defaultOption = this.defaultFamilyId;
 				ele.selectpicker('val', defaultOption);
 				ele.selectpicker('refresh');
 				ele.selectpicker('refresh');
