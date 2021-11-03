@@ -277,15 +277,21 @@
 						// struct_asym_id: _this.structAsymId,
 						// as auth_asym_id (mmCIF) === chain_id (PDBeAPI) === chainId internally used in TopologyViewer code
 						auth_asym_id: _this.authAsymId,
-						color:{r:255,g:255,b:255},
-						focus: true,
+						// color:{r:255,g:255,b:255},
+						// focus: true,
 						// For selecting just the domain of interest
 						start_residue_number: _this.plugins.twoD.instance.twoDProtsData.residueNumbers.start,
 						end_residue_number: _this.plugins.twoD.instance.twoDProtsData.residueNumbers.stop,
 					}];
-					viewerInstance.visual.select({data: targetChainSelection, nonSelectedColor: {r:16,g:16,b:16}}).then(() => {
-						viewerInstance.visual.select({ data: allSSEs, nonSelectedColor: {r:16,g:16,b:16}})
+					// Works, but rather slow, and anyway cuts repr parts due to 'focus effect'
+					// viewerInstance.visual.select({data: targetChainSelection, nonSelectedColor: {r:16,g:16,b:16}}).then(() => {
+						// viewerInstance.visual.select({ data: allSSEs, nonSelectedColor: {r:16,g:16,b:16}})
+					// });
+					
+					viewerInstance.visual.select({ data: allSSEs, nonSelectedColor: {r:16,g:16,b:16}}).then(() => {
+						viewerInstance.visual.focus(allSSEs);
 					});
+					
 				})
 				
 				// Upon user hover on Topology Component residue, highlight that residue in MolStar view
@@ -472,25 +478,31 @@
 		// on programmatic or user change of families selector, load domains select options and set value (either [0] or instance.domainId if page is with query params)
 		$(instance.familiesSelectEle).on('changed.bs.select', function (e, clickedIndex, isSelected, previousValue) {
 			// console.log(e, clickedIndex, isSelected, previousValue);
+			instance.submitButton.disabled = true;
 			const ele = $(instance.domainsSelectEle);
+			ele.attr('disabled', true).selectpicker('refresh');
 			const selectedFamilyId = $(this).selectpicker('val');
 			instance.loadDomainsSelectOptions(selectedFamilyId).then(() => {
 				// if it was programmatic change && if it is a wellcome page OR if it was the user's change => select first domain in the list
 				if ((clickedIndex === null && instance.wellcomePage) || clickedIndex) {
 					// select [0] and refresh.....
-					const defaultOption = ele[0].options[0].value;
-					ele.selectpicker('val', defaultOption);
-					ele.selectpicker('refresh');
-					ele.selectpicker('refresh');
-					instance.submitButton.disabled = false;
-					// console.log('select [0]', ele, defaultOption);
+					try {
+						// Here it breaks if the user clicks on family selector many times and too fast: "... prop 'value' of undefined"
+						// E.g. 6.10.160.10 has empty domain list: https://overprot.ncbr.muni.cz/data/db/families/6.10.160.10/domains.json
+						// Or maybe we should just disable family selector as well until everything is ready? Seems not.
+						const defaultOption = ele[0].options[0].value;
+						ele.selectpicker('val', defaultOption);
+						instance.submitButton.disabled = false;
+						ele.attr('disabled', false).selectpicker('refresh').selectpicker('refresh');
+					} catch(error) {
+						console.log(error);
+					}
 				// if it was a programmatic change (on page with query params we set selectors values equal to that params)
 				} else if (clickedIndex === null && !instance.wellcomePage) {
 					// select instance.domainId and refresh.....
 					ele.selectpicker('val', instance.domainId);
-					ele.selectpicker('refresh');
-					ele.selectpicker('refresh');
 					instance.submitButton.disabled = false;
+					ele.attr('disabled', false).selectpicker('refresh').selectpicker('refresh');
 					// console.log('select instance.domainId', ele, instance.domainId);
 				}
 			});
