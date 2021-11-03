@@ -363,7 +363,6 @@ class PdbTopologyViewerPlugin {
 		// we need this to construct url to 2DProts API
 		this.twoDProtsTimestamp = options.twoDProtsTimestamp;
         
-        // TODO: Investigate what it does to undertand what entityId to write to converted JSON (always 1, or 1 if chain A, 2 if B etc.)
         //If chain id is not provided then get best chain id from observed residues api
         if(typeof options.chainId == 'undefined' || options.chainId == null){
             this.getObservedResidues(this.entryId).then((result) => {
@@ -1165,9 +1164,10 @@ class PdbTopologyViewerPlugin {
 		for (let i = 1; i < helicesAndSheets.length; i++) {
 			const sseBefore = helicesAndSheets[i - 1];
 			const sseAfter = helicesAndSheets[i];
-			if (sseBefore.stop + 1 === sseAfter.start) {
-				continue;
-			}
+			// This is commented out as even in cases where SSEs follow each other without coils, we need to display connector, as 2DProts does this (e.g. https://2dprots.ncbr.muni.cz/static/web/generated-3.40.640.10/2021-10-27T20_09_05/image-1ajs_B02.svg)
+			// if (sseBefore.stop + 1 === sseAfter.start) {
+				// continue;
+			// }
 			
 			const sseBeforeEle = d3.select(`#${sseBefore.twoDProtsSSEId}`)
 			const sseAfterEle = d3.select(`#${sseAfter.twoDProtsSSEId}`)
