@@ -49,22 +49,25 @@
 		}
 		
         #pdb-topology-viewer {
-            position: relative;
+			/* minus navbar (56px) and overprot-wrapper*/
+            height: calc(100vh - 70px - 200px);
+			/*position: relative;
             width: calc(400px*1.0);
             height: 400px;
-			margin-left: 0px;
+			margin-left: 0px;*/
         }
 		
 		#myViewer{
-			height: 400px;
-			/*margin-left: 50px;*/
+			/* minus navbar (56px) and overprot-wrapper*/
+			height: calc(100vh - 70px - 200px);
+			/*margin-left: 50px;
 			width: 500px;
-			position: relative;
+			position: relative;*/
 		}
 		
 		#overprot-wrapper {
-			<!-- width: 900px; -->
-			<!-- height: 300px; -->
+			
+			height: 200px;
 		}
     </style>
 
@@ -112,11 +115,15 @@
 		</div>		
 		
 		<!-- PDB Topology Viewer container -->
-		<div class="flex-container">
-			<div id="pdb-topology-viewer"></div>
-			<div id="myViewer"></div>
+		<div class="row no-gutters">
+			<div id="pdb-topology-viewer" class="col-sm"></div>
+			<div id="myViewer" class="col-sm"></div>
 		</div>
-	</div>
+		<!-- <div class="flex-container"> -->
+			<!-- <div id="pdb-topology-viewer"></div> -->
+			<!-- <div id="myViewer"></div> -->
+		<!-- </div> -->
+	<!-- </div> -->
   </main>
     
 	

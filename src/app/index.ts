@@ -144,11 +144,6 @@ function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
 // Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chainID) {
 	// TODO: try different for both if something goes wrong
-	// const MINORAXIS = 3 * 2;
-	// const CONVEXITY = 2;
-	// const ARROW_SPREAD = 1 * 2;
-	// const ARROW_HEIGHT = 4;
-	
 	const MINORAXIS = 3 * 2 / 5;
 	const CONVEXITY = 2 / 5;
 	const ARROW_SPREAD = 1 * 2 / 5;
@@ -1207,10 +1202,11 @@ class PdbTopologyViewerPlugin {
                 <a style="color: #efefef;border-bottom:none; cursor:pointer;margin-left: 16px;" target="_blank" href="https://pdbe.org/${this.entryId}">${this.entryId}</a> | <span class="menuDesc">Entity ${this.entityId} | Chain ${this.chainId.toUpperCase()}</span>
                 <div class="menuOptions" style="float:right;margin-right: 20px;">
                     <select class="menuSelectbox" style="margin-right: 10px;"><option value="">Select</option></select>
-                    <img class="resetIcon" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/images/refresh.png" style="height:15px; width: 15px; border:0;position: absolute;margin-top: 11px;cursor:pointer;" title="Reset view" />
                 </div>
             </div>
         </div>`;
+		// we do not need refresh
+		// <img class="resetIcon" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/images/refresh.png" style="height:15px; width: 15px; border:0;position: absolute;margin-top: 11px;cursor:pointer;" title="Reset view" />
 
         //Get dimenstions
         let targetEleWt = this.targetEle.offsetWidth;
