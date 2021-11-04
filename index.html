@@ -96,6 +96,18 @@
 	<!-- </nav> -->
 	<nav class="navbar navbar-expand-lg navbar-dark bg-dark text-white">
 				<a class="navbar-brand" href="./index.html">Integrated Viewer</a>
+				<div class="col">
+					<div class='row'>
+						<div class='col'>
+							<div id='currentFamilyIdEle'></div>	
+						</div>
+					</div>
+					<div class='row'>
+						<div class='col'>
+							<div id='currentDomainIdEle'></div>
+						</div>
+					</div>
+				</div>
 				<form id="familyAndDomainForm" class="form-inline ml-auto my-0">
 					<label for="familiesSelector" class="mx-3 pl-3">Protein family (CATH):</label>
 					
@@ -184,9 +196,8 @@
 				this.domainsSelectEle = document.getElementById('domainsSelector');
 				this.submitButton = document.getElementById('submitFamilyAndDomainForm');
 				
-				// this.familiesList;
-				// this.domainsList;
-				
+				this.currentFamilyIdEle = document.getElementById('currentFamilyIdEle');
+				this.currentDomainIdEle = document.getElementById('currentDomainIdEle');				
 			}
 			
 			parseUrl() {
@@ -195,6 +206,11 @@
 				if (this.familyId && this.domainId) {
 					this.wellcomePage = false;
 				}
+			}
+			
+			showCurrentFamilyAndDomain() {
+				this.currentFamilyIdEle.innerHTML = `Current family (CATH): <strong>${this.familyId}</strong>`;
+				this.currentDomainIdEle.innerHTML = `Current domain: <strong>${this.domainId}</strong>`;
 			}
 			
 			async setData() {	
@@ -497,6 +513,7 @@
 		
 		const instance = new IntegratedViewer();
 		instance.parseUrl();
+		if (!instance.wellcomePage) instance.showCurrentFamilyAndDomain();
 		instance.bindFormSubmitListener();
 		
 		// on programmatic or user change of families selector, load domains select options and set value (either [0] or instance.domainId if page is with query params)

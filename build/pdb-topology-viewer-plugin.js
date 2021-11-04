@@ -175,7 +175,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
     // const ARROW_SPREAD = 1 * 2 / 5;
     // const ARROW_HEIGHT = 4 / 5;
     var MINORAXIS = 4 / 5;
-    var CONVEXITY = 5 / 10;
+    var CONVEXITY = 4 / 10;
     var ARROW_SPREAD = 1 * 2 / 5;
     var ARROW_HEIGHT = 4 / 5;
     // for recognizing 2DProts SSE labels

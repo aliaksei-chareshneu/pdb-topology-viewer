@@ -149,7 +149,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 	// const ARROW_SPREAD = 1 * 2 / 5;
 	// const ARROW_HEIGHT = 4 / 5;
 	const MINORAXIS = 4 / 5;
-	const CONVEXITY = 5 / 10;
+	const CONVEXITY = 4 / 10;
 	const ARROW_SPREAD = 1 * 2 / 5;
 	const ARROW_HEIGHT = 4 / 5;
 	
