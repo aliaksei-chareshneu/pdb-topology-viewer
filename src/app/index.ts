@@ -144,8 +144,12 @@ function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
 // Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chainID) {
 	// TODO: try different for both if something goes wrong
-	const MINORAXIS = 3 * 2 / 5;
-	const CONVEXITY = 2 / 5;
+	// const MINORAXIS = 3 * 2 / 5;
+	// const CONVEXITY = 2 / 5;
+	// const ARROW_SPREAD = 1 * 2 / 5;
+	// const ARROW_HEIGHT = 4 / 5;
+	const MINORAXIS = 4 / 5;
+	const CONVEXITY = 5 / 10;
 	const ARROW_SPREAD = 1 * 2 / 5;
 	const ARROW_HEIGHT = 4 / 5;
 	
@@ -1917,8 +1921,9 @@ class PdbTopologyViewerPlugin {
 
             selectBoxEle.addEventListener("change", this.displayDomain.bind(this));
 
-            const resetIconEle = this.targetEle.querySelector('.resetIcon');
-            resetIconEle.addEventListener("click", this.resetDisplay.bind(this));
+			// we do not need reset icon
+            // const resetIconEle = this.targetEle.querySelector('.resetIcon');
+            // resetIconEle.addEventListener("click", this.resetDisplay.bind(this));
 
         }else{
             this.targetEle.querySelector('.menuOptions').style.display = 'none';
