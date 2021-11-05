@@ -249,9 +249,27 @@
 			
 			populateSelectEle(ele, optionsArr) {
 				ele.options.length = 0;
+				var start = new Date();
+				// With 30k+ options for some families it can freeze the selector in disabled state
+				
+				// 14k ms
+				// for (let item of optionsArr) {
+					// $(ele).append(new Option(item, item))
+				// }
+				
+				// Possibly faster version
+				// 10k ms
+				// $(ele).append($.map(optionsArr, (item) => new Option(item, item)));
+				
+				let html = '';
 				for (let item of optionsArr) {
-					$(ele).append(new Option(item, item))
+					html = html + `<option value="${item}">${item}</option>`;
 				}
+				$(ele).append(html);
+				
+				var time = new Date() - start;
+				console.log(time);
+				
 				$(ele).selectpicker('refresh');
 			}
 			
@@ -525,12 +543,13 @@
 			const selectedFamilyId = $(this).selectpicker('val');
 			instance.loadDomainsSelectOptions(selectedFamilyId).then(() => {
 				// if it was programmatic change && if it is a wellcome page OR if it was the user's change => select first domain in the list
-				if ((clickedIndex === null && instance.wellcomePage) || clickedIndex) {
+				if ((clickedIndex === null && instance.wellcomePage) || clickedIndex !== null) {
 					// select [0] and refresh.....
 					try {
 						// Here it breaks if the user clicks on family selector many times and too fast: "... prop 'value' of undefined"
 						// E.g. 6.10.160.10 has empty domain list: https://overprot.ncbr.muni.cz/data/db/families/6.10.160.10/domains.json
-						// Or maybe we should just disable family selector as well until everything is ready? Seems not.
+						// Or maybe we should just disable family selector as well until everything is ready? Seems not.						
+						console.log('selecting default domain option');
 						const defaultOption = ele[0].options[0].value;
 						ele.selectpicker('val', defaultOption);
 						instance.submitButton.disabled = false;
@@ -543,12 +562,16 @@
 				// if it was a programmatic change (on page with query params we set selectors values equal to that params)
 				} else if (clickedIndex === null && !instance.wellcomePage) {
 					// select instance.domainId and refresh.....
+					console.log('selecting current domain option');
 					ele.selectpicker('val', instance.domainId);
 					instance.submitButton.disabled = false;
 					ele.attr('disabled', false);
 					ele.selectpicker('refresh');
 					ele.selectpicker('refresh');
 					// console.log('select instance.domainId', ele, instance.domainId);
+				} else {
+					console.log('Something wrong happened');
+					console.log(e, clickedIndex, isSelected, previousValue);
 				}
 			});
 		});
