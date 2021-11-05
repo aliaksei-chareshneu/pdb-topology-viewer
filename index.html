@@ -534,7 +534,9 @@
 						const defaultOption = ele[0].options[0].value;
 						ele.selectpicker('val', defaultOption);
 						instance.submitButton.disabled = false;
-						ele.attr('disabled', false).selectpicker('refresh').selectpicker('refresh');
+						ele.attr('disabled', false);
+						ele.selectpicker('refresh');
+						ele.selectpicker('refresh');
 					} catch(error) {
 						console.log(error);
 					}
@@ -543,7 +545,9 @@
 					// select instance.domainId and refresh.....
 					ele.selectpicker('val', instance.domainId);
 					instance.submitButton.disabled = false;
-					ele.attr('disabled', false).selectpicker('refresh').selectpicker('refresh');
+					ele.attr('disabled', false);
+					ele.selectpicker('refresh');
+					ele.selectpicker('refresh');
 					// console.log('select instance.domainId', ele, instance.domainId);
 				}
 			});
