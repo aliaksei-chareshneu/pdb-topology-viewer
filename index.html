@@ -231,13 +231,13 @@
 					fetch(`https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${this.pdbId}/chain/${this.authAsymId}`)
 				]);
 				
-				// Approach with parsing HTML from 2DProts is more universal, but still does not work for all, e.g. family_id=2.60.40.10&domain_id=12e8H01 gets correct timestamp, using which svg is accesible, but json - not (just changing .svg to .json at the end of link)
-				const twoDProtsHTML = await twoDprotsResponse.text();
-				const parser = new DOMParser();
-				const doc = parser.parseFromString(twoDProtsHTML, 'text/html');
-				console.log(doc);
-				const anchorWithSVGLink = doc.querySelector('a[href$=".svg"]');
-				this.twoDProtsTimestamp = anchorWithSVGLink.href.split('/').splice(-2, 1);
+				// Approach with parsing HTML from 2DProts still does not work for all, e.g. family_id=2.60.40.10&domain_id=12e8H01 gets correct timestamp, using which svg is accesible, but json is not (just changing .svg to .json at the end of link)
+				// const twoDProtsHTML = await twoDprotsResponse.text();
+				// const parser = new DOMParser();
+				// const doc = parser.parseFromString(twoDProtsHTML, 'text/html');
+				// console.log(doc);
+				// const anchorWithSVGLink = doc.querySelector('a[href$=".svg"]');
+				// this.twoDProtsTimestamp = anchorWithSVGLink.href.split('/').splice(-2, 1);
 				
 				const ranges = await rangesResponse.json();
 				if (ranges[this.pdbId].molecules.length > 1) {

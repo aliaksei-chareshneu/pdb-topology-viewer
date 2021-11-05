@@ -480,34 +480,16 @@ class PdbTopologyViewerPlugin {
         //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         // ]
 		// we take first 4 characters from Overprot domain ID, add "_", add structAsymId (as 2DProts relies on it), and add the rest of domainId
-		const twoDprotsDomainId = `${domainId.slice(0, 4)}_${structAsymId}${domainId.slice(5)}`;
+		// const twoDprotsDomainId = `${domainId.slice(0, 4)}_${structAsymId}${domainId.slice(5)}`;
 		// VERSION WITHOUT UNDERSCORE IF REDIRECTS TO 2DPROTS API WILL WORK
-		// const twoDprotsDomainId = `${domainId.slice(0, 4}${structAsymId}${domainId.slice(5)}`
+		const twoDprotsDomainId = `${domainId.slice(0, 4}${structAsymId}${domainId.slice(5)}`
         const dataUrls = [
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
-            // https://jsonstorage.net/api/items/280e51f7-6953-4979-bf8a-0b22970317c8 - distorted only helix
-            // https://jsonstorage.net/api/items/a6e44d75-5beb-4768-9cfa-d7124ddc5e9f - both helix and strand (wrong)
-            // https://jsonstorage.net/api/items/f05f7ac3-2880-42d1-8ce0-02f754bc6f54 - both helix and strand (correct, but placed not so well)
-            // https://jsonstorage.net/api/items/510463b5-d100-4a51-afaf-2d7d6145361d - both helix and strand (CORRECT!)
-            // https://jsonstorage.net/api/items/64b59c12-c0bf-44f9-aadd-78770e49abc8 - both 1 helix (CORRECT) and strand (CORRECT)
-            // https://jsonstorage.net/api/items/93ad97dc-e180-4a94-8433-5e71b48c189e - both 2 helix (CORRECT) and strand (CORRECT)
-            // Latest: `https://cors-anywhere.herokuapp.com/https://jsonstorage.net/api/items/4d8d5d12-8492-47e2-89ea-4d9d8d30ccb1`,
-			// This works with hand-picked multiplicators
-            // `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/67e956fe787f1a79d0b85325fce2680f94ddebb0/3myt_D00_data.json`,
-			// These two has incorrect angles for some strands, and helices
-			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/236fa166e432af64b9cfaf494169be357c90b070/image-3oh1_A02.json`,
-			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/236fa166e432af64b9cfaf494169be357c90b070/image-3oh2_A02.json`,
-			// The following two should work:
-			// WORKING ONE
-			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3oh1_A02.json`,
-			// `https://rawcdn.githack.com/aliaksei-chareshneu/hosting-some-files/ffde6d3b79b0f7a955c559a0c00b10eb9f33b308/image-3ogz_A02.json`,
-			// NOT VERY MUCH WORKING (2021-10... problem?)
-			// currently works only for 2.40.160.10 family, tried several domains from domains list for that family that was obtained from overprot
-			// What is 00 before .json? Is it entityId? 00=1? Probably not
-			`https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/${twoDProtsTimestamp}/image-${twoDprotsDomainId}.json`,
-			// `https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/2021-10-04T11_52_33_653629990_02_00/image-${twoDprotsDomainId}.json`,
-			// `https://2dprots.ncbr.muni.cz/static/web/generated-2.70.170.10/2021-10-04T11_15_36_727366416_02_00/image-2bg9_A01.json`,
+			// Version with parsing HTML from 2DProts webpage to get timestamp. Works for many domains, but not for all. Remember to switch to domain ID with underscore (above)
+			// `https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/${twoDProtsTimestamp}/image-${twoDprotsDomainId}.json`,
+			// Version with working redirect and allow origin *
+			`https://2dprots.ncbr.muni.cz/files/domain/${twoDprotsDomainId}/json`,
 			// For the generalized redirect version below:
 			// Access to fetch at 'http://2dprots.ncbr.muni.cz/files/domain/2bg9A01/json' (redirected from 'https://2dprots.ncbr.muni.cz/files/domain/2bg9A01/latest/json') from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
 			// `https://2dprots.ncbr.muni.cz/files/domain/${twoDprotsDomainId}/latest/json`,
