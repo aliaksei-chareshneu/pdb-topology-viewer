@@ -226,18 +226,20 @@
 				// assembling twoDprotsDomainId
 				this.twoDprotsDomainId = `${this.domainId.slice(0, 4)}${this.structAsymId}${this.domainId.slice(5)}`;
 				
-				const [twoDprotsResponse, rangesResponse] = await Promise.all([
-					fetch(`https://2dprots.ncbr.muni.cz/domain/${this.twoDprotsDomainId}`),
-					fetch(`https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${this.pdbId}/chain/${this.authAsymId}`)
-				]);
-				
 				// Approach with parsing HTML from 2DProts still does not work for all, e.g. family_id=2.60.40.10&domain_id=12e8H01 gets correct timestamp, using which svg is accesible, but json is not (just changing .svg to .json at the end of link)
+				// const [twoDprotsResponse, rangesResponse] = await Promise.all([
+					// fetch(`https://2dprots.ncbr.muni.cz/domain/${this.twoDprotsDomainId}`),
+					// fetch(`https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${this.pdbId}/chain/${this.authAsymId}`)
+				// ]);
+				
 				// const twoDProtsHTML = await twoDprotsResponse.text();
 				// const parser = new DOMParser();
 				// const doc = parser.parseFromString(twoDProtsHTML, 'text/html');
 				// console.log(doc);
 				// const anchorWithSVGLink = doc.querySelector('a[href$=".svg"]');
 				// this.twoDProtsTimestamp = anchorWithSVGLink.href.split('/').splice(-2, 1);
+				
+				const rangesResponse = await fetch(`https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${this.pdbId}/chain/${this.authAsymId}`);
 				
 				const ranges = await rangesResponse.json();
 				if (ranges[this.pdbId].molecules.length > 1) {
@@ -248,12 +250,12 @@
 			}
 			
 			populateSelectEle(ele, optionsArr) {
-				ele.options.length = 0;
+				ele[0].options.length = 0;
 				var start = new Date();
 				// With 30k+ options for some families it can freeze the selector in disabled state
 				
 				// 14k ms
-				// for (let item of optionsArr) {
+				// for (const item of optionsArr) {
 					// $(ele).append(new Option(item, item))
 				// }
 				
@@ -261,16 +263,23 @@
 				// 10k ms
 				// $(ele).append($.map(optionsArr, (item) => new Option(item, item)));
 				
+				// let html = '';
+				// for (const item of optionsArr) {
+					// html = html + `<option value="${item}">${item}</option>`;
+				// }
+				// ele.append(html);
+				
 				let html = '';
-				for (let item of optionsArr) {
-					html = html + `<option value="${item}">${item}</option>`;
+				// superoptimized
+				for (var i = 0, len = optionsArr.length; i < len; ++i) {
+					html = html + `<option value="${optionsArr[i]}">${optionsArr[i]}</option>`;
 				}
-				$(ele).append(html);
+				ele[0].innerHTML = html;
 				
 				var time = new Date() - start;
 				console.log(time);
 				
-				$(ele).selectpicker('refresh');
+				ele.selectpicker('refresh');
 			}
 			
 			bindFormSubmitListener() {
@@ -493,10 +502,10 @@
 				// Parse txt to get arr with family IDs
 				const options = txt.replace(/\r/g, "").split(/\n/);
 				// Populate familiesSelectEle with that arr
-				const ele = this.familiesSelectEle;
+				const ele = $(this.familiesSelectEle);
 				this.populateSelectEle(ele, options);
 				console.log('families select populated');
-				return $(ele);
+				return ele;
 			}
 			
 			async loadDomainsSelectOptions(familyId) {
@@ -522,10 +531,10 @@
 				const overprotOptions = overprotDomains.map(domain => domain.domain);
 				
 				// Populate domainsSelectEle with that arr
-				const ele = this.domainsSelectEle;
+				const ele = $(this.domainsSelectEle);
 				this.populateSelectEle(ele, overprotOptions);
 				console.log('domains select populated');
-				return $(ele);
+				return ele;
 			}
 		}
 		
