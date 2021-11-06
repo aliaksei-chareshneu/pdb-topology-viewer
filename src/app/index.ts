@@ -833,7 +833,8 @@ class PdbTopologyViewerPlugin {
             // d3.node return first element in selection
             // SVGGraphicsElement.getBBox returns coordinates of rectangle in which SVG element fits
             // In this case it selects TopologyEle (outer helix not divided onto residues)
-            let boxHeight = (this.svgEle.select('.helices'+index).node().getBBox().height) + (subPathHeight/2);
+			// :not(.inMaskTag) is required as otherwise it will select the first .helicesX which is inside mask. In FireFox, bbox of that is 0, in Chrome it is okay
+            let boxHeight = (this.svgEle.select('.helices'+index+':not(.inMaskTag)').node().getBBox().height) + (subPathHeight/2);
             const singleUnitHt = boxHeight/totalAaInPath;
             boxHeight = boxHeight - singleUnitHt/2; //height correction
             subPathHeight = (boxHeight - singleUnitHt/2)/totalAaInPath;
@@ -1444,7 +1445,8 @@ class PdbTopologyViewerPlugin {
 		
 		// Cut out all white space around SVG (necessary since in original 2DProts SVG and TopologyViewer SVGs drawn based on 2DProts JSON layout contains excessive white space around actual SSE diagram)
 		const bbox = this.svgEle.node().getBBox();
-		const viewBox = [bbox.x, bbox.y, bbox.width, bbox.height].join(' ');
+		// -/+ 1 adjustments due to stroke width not taken into an account (part of stroke can be cut otherwise)
+		const viewBox = [bbox.x - 1, bbox.y - 1, bbox.width + 1, bbox.height + 1].join(' ');
 		this.svgEle.attr('viewBox', viewBox);
 		
 		// For now white rects inside mask are bigger than 'zoomed-in' svg, the code below should make them equal size with svg viewBox
