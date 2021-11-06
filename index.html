@@ -305,9 +305,16 @@
 				// console.log(viewerInstance);
 				//Set options (Check out available options list in the documentation)
 				var options = {
-					moleculeId: this.pdbId,
-					hideControls: true
+					// moleculeId: this.pdbId,
+					hideControls: true,
+					customData: {
+						url: `https://www.ebi.ac.uk/pdbe/coordinates/${this.pdbId}/chains?entityId=${this.entityId}&authAsymId=${this.authAsymId}&encoding=bcif`,
+						format: 'cif',
+						binary: true
+					},
+					pdbeLink: true,
 				}
+				// Alternative coordinate server: https://cs.litemol.org/ (same syntax)
 
 				//Get element from HTML/Template to place the viewer 
 				var viewerContainer = document.getElementById('myViewer');
