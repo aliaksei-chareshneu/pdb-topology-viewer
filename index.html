@@ -183,7 +183,7 @@
 				this.defaultFamilyId = '2.160.10.30';
 				this.defaultDomainId = '3oh1A02';
 				
-				this.twoDprotsDomainId;
+				// this.twoDprotsDomainId;
 				this.twoDProtsTimestamp;
 				
 				this.pdbId;
@@ -224,7 +224,8 @@
 				this.structAsymId = currentDomainData['chain_id'];
 				this.authAsymId = currentDomainData['auth_chain_id'];
 				// assembling twoDprotsDomainId
-				this.twoDprotsDomainId = `${this.domainId.slice(0, 4)}${this.structAsymId}${this.domainId.slice(5)}`;
+				// Not necessary as 2DProts switched from struct_asym_id to chain_id
+				// this.twoDprotsDomainId = `${this.domainId.slice(0, 4)}${this.structAsymId}${this.domainId.slice(5)}`;
 				
 				// Approach with parsing HTML from 2DProts still does not work for all, e.g. family_id=2.60.40.10&domain_id=12e8H01 gets correct timestamp, using which svg is accesible, but json is not (just changing .svg to .json at the end of link)
 				// const [twoDprotsResponse, rangesResponse] = await Promise.all([
@@ -487,7 +488,7 @@
 			
 			render1D() {
 				<!-- Actually insert in HTML rather than render -->
-				const html = `<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-${this.familyId}.json' width=1800 height=300 color-method='rainbow' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>`;
+				const html = `<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-${this.familyId}.json' width=1800 height=200 color-method='rainbow' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>`;
 				
 				const container = document.getElementById('overprot-wrapper');
 				container.innerHTML = html;

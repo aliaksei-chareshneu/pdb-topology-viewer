@@ -533,7 +533,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         return __awaiter(this, void 0, void 0, function () {
             var twoDprotsDomainId, dataUrls;
             return __generator(this, function (_a) {
-                twoDprotsDomainId = "" + domainId.slice(0, 4) + structAsymId + domainId.slice(5);
+                twoDprotsDomainId = domainId;
                 dataUrls = [
                     "https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/" + pdbId,
                     "https://www.ebi.ac.uk/pdbe/api/mappings/" + pdbId,

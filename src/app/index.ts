@@ -479,10 +479,12 @@ class PdbTopologyViewerPlugin {
         //     `https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
         //     `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         // ]
+		// Not necessary as 2DProts switched from struct_asym_id to chain_id
 		// we take first 4 characters from Overprot domain ID, add "_", add structAsymId (as 2DProts relies on it), and add the rest of domainId
 		// const twoDprotsDomainId = `${domainId.slice(0, 4)}_${structAsymId}${domainId.slice(5)}`;
 		// VERSION WITHOUT UNDERSCORE IF REDIRECTS TO 2DPROTS API WILL WORK
-		const twoDprotsDomainId = `${domainId.slice(0, 4}${structAsymId}${domainId.slice(5)}`
+		// const twoDprotsDomainId = `${domainId.slice(0, 4}${structAsymId}${domainId.slice(5)}`
+		const twoDprotsDomainId = domainId;
         const dataUrls = [
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/entities/${pdbId}`,
             `https://www.ebi.ac.uk/pdbe/api/mappings/${pdbId}`,
