@@ -298,8 +298,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             coilStopPoint.x,
             coilStopPoint.y,
         ];
-        // Coils are disabled for now - need to fix their positioning and residue content
-        // outputJSON[entryID]['1'][chainID].coils.push(coilTopologyData);
+        // Coils should be disabled for drawing, but we need that data to color 3D
+        outputJSON[entryID][entityID][chainID].coils.push(coilTopologyData);
     }
     return outputJSON;
 }
@@ -466,7 +466,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 }
                 _this_1.apiData = result;
                 var topologyData = _this_1.apiData[2][_this_1.entryId][_this_1.entityId][_this_1.chainId];
-                _this_1.twoDProtsData.topologyData = __spreadArrays(topologyData.helices, topologyData.strands).sort(function (a, b) { return a.stop < b.start ? -1 : 1; });
+                _this_1.twoDProtsData.topologyData = __spreadArrays(topologyData.helices, topologyData.strands, topologyData.coils).sort(function (a, b) { return a.stop < b.start ? -1 : 1; });
                 _this_1.twoDProtsData.residueNumbers = {
                     'start': _this_1.twoDProtsData.topologyData[0].start,
                     'stop': _this_1.twoDProtsData.topologyData.slice(-1)[0].stop,
@@ -1204,7 +1204,10 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         this.svgEle.on("contextmenu", function (d, i) { d3.event.preventDefault(); }); //add zoom event and block right click event
         var topologyData = this.apiData[2][this.entryId][this.entityId][this.chainId];
         var _loop_2 = function (secStrType) {
-            // angular.forEach(this.apiResult.data[_this.entryId].topology[scope.entityId][scope.bestChainId], function(secStrArr, secStrType) {
+            // angular.forEach(this.apiResult.data[_this.entryId].topology[scope.entityId][scope.bestChainId], function(secStrArr, secStrType) 
+            // We don't need to draw coils based on coil data, we draw them as 'connecting coils' separately in other function
+            if (secStrType === 'coils')
+                return "continue";
             var secStrArr = topologyData[secStrType];
             if (!secStrArr)
                 return { value: void 0 };
@@ -1369,7 +1372,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                         //for coils
                         if (secStrType === 'coils') {
                             //create subsections/paths
-                            _this_1.drawCoilsSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, secStrData.color);
+                            // disabled, as coils are drawn as connecting coils separately, but we need their data for coloring 3D later
+                            // this.drawCoilsSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, secStrData.color);
                         }
                         _this_1.scaledPointsArr = []; //empty the arr for next iteration
                     }
