@@ -1,3 +1,4 @@
+declare function getKeyByValue(object: any, value: any): string | undefined;
 declare function getStartStopCoords(d3selection: any): {
     startCoords: {
         x: undefined;
@@ -46,6 +47,7 @@ declare class PdbTopologyViewerPlugin {
         topologyData: undefined;
         residueNumbers: undefined;
     };
+    matchingLabels1Dto2D: any;
     targetEle: HTMLElement;
     pdbevents: any;
     xScale: any;

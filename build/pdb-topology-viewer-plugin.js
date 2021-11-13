@@ -50,6 +50,10 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function (toElement) {
     return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
 };
+// get object key by value
+function getKeyByValue(object, value) {
+    return Object.keys(object).find(function (key) { return object[key] === value; });
+}
 // Function that takes d3 selection and returns 'startCoord' and 'stopCoord' depending on SSE type (helix/sheet)
 // Used to draw connecting coils
 function getStartStopCoords(d3selection) {
@@ -241,6 +245,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             // data for drawing coils between helices and/or strands
             'startCoord': { 'x': undefined, 'y': undefined },
             'stopCoord': { 'x': undefined, 'y': undefined },
+            'sseTypeString': undefined,
         };
         var sseType = sse[0].charAt(0);
         if (sseType === '?') {
@@ -253,6 +258,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             topologyData.stopCoord.y = topologyData.path[3];
             topologyData.startCoord.x = topologyData.path[8];
             topologyData.startCoord.y = topologyData.path[9];
+            topologyData.sseTypeString = 'helix';
             outputJSON[entryID][entityID][chainID].helices.push(topologyData);
         }
         else if (STRANDS_CHARS.indexOf(sseType) > -1) {
@@ -262,6 +268,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             topologyData.startCoord.y = topologyData.center.y + topologyData.majoraxis / 2;
             topologyData.stopCoord.x = topologyData.path[6];
             topologyData.stopCoord.y = topologyData.path[7];
+            topologyData.sseTypeString = 'strand';
             outputJSON[entryID][entityID][chainID].strands.push(topologyData);
         }
         else {
@@ -285,6 +292,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             'path': undefined,
             // TODO: figure out how to determine the color
             'color': sseAfter.color,
+            'sseTypeString': 'coil',
         };
         var coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
         console.log(coilStartPoint);
@@ -433,6 +441,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         this.structAsymId = options.structAsymId;
         // we need this to construct url to 2DProts API
         this.twoDProtsTimestamp = options.twoDProtsTimestamp;
+        // we need this for 3D => 1D interactivity to match 3D residue to element
+        this.matchingLabels1Dto2D = {};
         //If chain id is not provided then get best chain id from observed residues api
         if (typeof options.chainId == 'undefined' || options.chainId == null) {
             this.getObservedResidues(this.entryId).then(function (result) {
@@ -1950,7 +1960,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 });
                 // can be undefined e.g. if user hovers over coil or some other domain on 3D that is not displayed on 1D/2D
                 if (targetSSE_1) {
-                    var overprotLabel = targetSSE_1.twoDProtsSSEId;
+                    var overprotLabel = getKeyByValue(this.matchingLabels1Dto2D, targetSSE_1.twoDProtsSSEId);
                     document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
                         detail: {
                             'sses': [{ 'label': overprotLabel }]

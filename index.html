@@ -146,6 +146,11 @@
 	<!-- Fetching data for options in selectors -->
 	<script>
 	// (async () => {
+		// get object key by value
+		function getKeyByValue(object, value) {
+			return Object.keys(object).find(key => object[key] === value);
+		}
+		
 		// Converts color name ('grey', 'gray' will work) to HEX
 		function colorNameToHex(colorName){
 			const ctx = document.createElement('canvas').getContext('2d');
@@ -199,7 +204,20 @@
 				this.submitButton = document.getElementById('submitFamilyAndDomainForm');
 				
 				this.currentFamilyIdEle = document.getElementById('currentFamilyIdEle');
-				this.currentDomainIdEle = document.getElementById('currentDomainIdEle');				
+				this.currentDomainIdEle = document.getElementById('currentDomainIdEle');
+
+				this.overprotDiagramJson;
+				
+				this.matchingLabels1Dto2D;
+			}
+			
+			matchLabels1Dto2D() {
+				const _this = this;
+				const twoDProtsTopologyData = _this.plugins.twoD.instance.twoDProtsData.topologyData;
+				for (let item of this.overprotDiagramJson.nodes) {
+					_this.matchingLabels1Dto2D[item.label] = twoDProtsTopologyData.filter(i => i.sseTypeString !== 'coil' && i.color === item['rainbow_hex']).twoDProtsSSEId;
+				}
+				console.log(_this.matchingLabels1Dto2D);
 			}
 			
 			parseUrl() {
@@ -250,6 +268,11 @@
 					console.log(ranges);
 				}
 				this.entityId = ranges[this.pdbId].molecules[0].entity_id;
+				
+				// Get overprot diagram to later get colors and match 1D elements with 2D SSEs based on colors
+				const overprotDiagramData = await fetch(`https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-${this.familyId}.json`);
+				const overprotDiagramJson = await overprotDiagramData.json();
+				this.overprotDiagramJson = overprotDiagramJson;
 			}
 			
 			populateSelectEle(ele, optionsArr) {
@@ -399,6 +422,7 @@
 					<!-- } -->
 				<!-- }); -->
 				
+				<!-- 1D => 2D and 1D => 3D interactivity -->
 				<!-- H5 helix is not present in 2D, so it is not highlighted -->
 				document.addEventListener('PDB.overprot.hover', (event) => {
 					if (event.detail.sses[0]) {
@@ -408,6 +432,7 @@
 						
 						let molstarData = sses.map(sse => {
 							<!-- Right now sseLabel selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fixed by adding class to the last one -->
+							const twoDProtsLabel = _this.matchingLabels1Dto2D[sse.label];
 							const data = d3.select(`#${sse.label}.topologyEleTopLayer`)
 							.attr('fill', 'rgb(211,211,211)')
 							.attr('fill-opacity','1.0')
@@ -448,7 +473,8 @@
 			}
 				
 			render2D() {
-				// document.addEventListener('DOMContentLoaded', () => {
+				// document.addEventListener('DOMContentLoaded', () => 
+					const _this = this;
 					//Create plugin instance
 					const pluginInstance = new PdbTopologyViewerPlugin();
 					this.plugins.twoD.instance = pluginInstance;
@@ -478,10 +504,10 @@
 					
 					<!-- 2D => 1D hover event listener -->
 					document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
-						<!-- console.log(event) -->
+						const overprotLabel = getKeyByValue(_this.matchingLabels1Dto2D, event.eventData.parentSSEId);
 						document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
 							detail: {
-										'sses': [{'label': event.eventData.parentSSEId}]
+										'sses': [{'label': overprotLabel}]
 									}
 								}));
 					});
@@ -639,6 +665,7 @@
 					instance.render1D();
 					instance.render2D();
 					instance.render3D();
+					matchLabels1Dto2D();
 				});
 			});
 		}		

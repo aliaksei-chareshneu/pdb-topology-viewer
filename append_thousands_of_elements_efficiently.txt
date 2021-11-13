@@ -1,0 +1,25 @@
+Append via documentFragment?
+
+var
+	i, li,
+	frag = document.createDocumentFragment(),
+	ul = frag.appendChild(document.createElement('ul'));
+
+for (i = 1; i <= 3; i++) {
+	li = ul.appendChild(document.createElement('li'));
+	li.textContent = 'item ' + i;
+}
+
+document.body.appendChild(frag);
+
+document.body.appendChild(frag);
+
+var fragment = new DocumentFragment()
+
+fruits.forEach(function (fruit) {
+  var li = document.createElement('li')
+  li.innerHTML = fruit
+  fragment.appendChild(li)
+})
+
+list.appendChild(fragment)
