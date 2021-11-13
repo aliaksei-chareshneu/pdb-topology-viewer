@@ -199,7 +199,9 @@
 				this.submitButton = document.getElementById('submitFamilyAndDomainForm');
 				
 				this.currentFamilyIdEle = document.getElementById('currentFamilyIdEle');
-				this.currentDomainIdEle = document.getElementById('currentDomainIdEle');				
+				this.currentDomainIdEle = document.getElementById('currentDomainIdEle');
+
+				this.overprotDiagramJson;
 			}
 			
 			parseUrl() {
@@ -250,6 +252,11 @@
 					console.log(ranges);
 				}
 				this.entityId = ranges[this.pdbId].molecules[0].entity_id;
+				
+				// Get overprot diagram to later get colors and match 1D elements with 2D SSEs based on colors
+				const overprotDiagramData = await fetch(`https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-${this.familyId}.json`);
+				const overprotDiagramJson = await overprotDiagramData.json();
+				this.overprotDiagramJson = overprotDiagramJson;
 			}
 			
 			populateSelectEle(ele, optionsArr) {
@@ -301,6 +308,7 @@
 			}
 			
 			render3D() {
+				const _this = this;
 				//Create plugin instance
 				const viewerInstance = new PDBeMolstarPlugin();
 				this.plugins.threeD.instance = viewerInstance;
@@ -334,7 +342,6 @@
 					document.addEventListener('PDBtopologyViewerApiDataLoaded', resolve, false);
 				});
 				
-				const _this = this;
 				Promise.all([loadComplete, twoDProtsApiDataObtained]).then(() => {
 					// here we could hide loader for 2dprots or for all viewers
 					console.log('both api data and 3d are ready')
@@ -399,16 +406,20 @@
 					<!-- } -->
 				<!-- }); -->
 				
+				<!-- 1D => 3D, 1D => 2D interactivity -->
 				<!-- H5 helix is not present in 2D, so it is not highlighted -->
 				document.addEventListener('PDB.overprot.hover', (event) => {
 					if (event.detail.sses[0]) {
 						console.log('PDB.overprot.hover', event);
-						<!-- TODO: fix console error - offhover overprot shoots another event with .sses = empty array -->
 						const sses = event.detail.sses;
 						
 						let molstarData = sses.map(sse => {
-							<!-- Right now sseLabel selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fixed by adding class to the last one -->
-							const data = d3.select(`#${sse.label}.topologyEleTopLayer`)
+							const overprotSSEColorHex = this.overprotDiagramJson.nodes.filter(ele => ele.label === sse.label)[0]['rainbow_hex'];
+							console.log(overprotSSEColorHex);
+							const requiredTwoDProtsSSEId = _this.plugins.twoD.instance.twoDProtsData.topologyData.filter(i => i.sseTypeString !== 'coil' && i.color === overprotSSEColorHex)[0].twoDProtsSSEId;
+							console.log(requiredTwoDProtsSSEId);
+							<!-- sseLabel without class selector selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fixed by adding class to the last one -->
+							const data = d3.select(`#${requiredTwoDProtsSSEId}.topologyEleTopLayer`)
 							.attr('fill', 'rgb(211,211,211)')
 							.attr('fill-opacity','1.0')
 							.data()
@@ -449,6 +460,7 @@
 				
 			render2D() {
 				// document.addEventListener('DOMContentLoaded', () => {
+					const _this = this;
 					//Create plugin instance
 					const pluginInstance = new PdbTopologyViewerPlugin();
 					this.plugins.twoD.instance = pluginInstance;
@@ -465,6 +477,7 @@
 					  familyId:	this.familyId,
 					  domainId: this.domainId,
 					  twoDProtsTimestamp: this.twoDProtsTimestamp,
+					  overprotDiagramJson: this.overprotDiagramJson,
 					  // entryId: '1akd',
 					  // entityId: '1',
 					  // chainId: 'A',
@@ -478,10 +491,12 @@
 					
 					<!-- 2D => 1D hover event listener -->
 					document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
-						<!-- console.log(event) -->
+						const twoDProtsSSEColorHex = event.eventData.color;
+						const correspondingOverprotLabel = _this.overprotDiagramJson.nodes.filter(item => item['rainbow_hex'] === twoDProtsSSEColorHex)[0].label;
+						
 						document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
 							detail: {
-										'sses': [{'label': event.eventData.parentSSEId}]
+										'sses': [{'label': correspondingOverprotLabel}]
 									}
 								}));
 					});

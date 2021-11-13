@@ -241,6 +241,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             // data for drawing coils between helices and/or strands
             'startCoord': { 'x': undefined, 'y': undefined },
             'stopCoord': { 'x': undefined, 'y': undefined },
+            'sseTypeString': undefined,
         };
         var sseType = sse[0].charAt(0);
         if (sseType === '?') {
@@ -253,6 +254,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             topologyData.stopCoord.y = topologyData.path[3];
             topologyData.startCoord.x = topologyData.path[8];
             topologyData.startCoord.y = topologyData.path[9];
+            topologyData.sseTypeString = 'helix';
             outputJSON[entryID][entityID][chainID].helices.push(topologyData);
         }
         else if (STRANDS_CHARS.indexOf(sseType) > -1) {
@@ -262,6 +264,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             topologyData.startCoord.y = topologyData.center.y + topologyData.majoraxis / 2;
             topologyData.stopCoord.x = topologyData.path[6];
             topologyData.stopCoord.y = topologyData.path[7];
+            topologyData.sseTypeString = 'strand';
             outputJSON[entryID][entityID][chainID].strands.push(topologyData);
         }
         else {
@@ -285,6 +288,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             'path': undefined,
             // TODO: figure out how to determine the color
             'color': sseAfter.color,
+            'sseTypeString': 'coil',
         };
         var coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
         console.log(coilStartPoint);
@@ -433,6 +437,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         this.structAsymId = options.structAsymId;
         // we need this to construct url to 2DProts API
         this.twoDProtsTimestamp = options.twoDProtsTimestamp;
+        // To match 1D elements and 2DProts SSEs based on colors
+        this.overprotDiagramJson = options.overprotDiagramJson;
         //If chain id is not provided then get best chain id from observed residues api
         if (typeof options.chainId == 'undefined' || options.chainId == null) {
             this.getObservedResidues(this.entryId).then(function (result) {
@@ -635,7 +641,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
     };
     // TODO: method needs to be modified: subPathHeight assumes that the SVG element is vertical, while in 2DProts it can oriented arbitrarily
     // TODO: very important for any SSE is to be able to get its length to obtain the length of residue subelements
-    PdbTopologyViewerPlugin.prototype.drawStrandSubpaths = function (startResidueNumber, stopResidueNumber, index, parentSSEId) {
+    PdbTopologyViewerPlugin.prototype.drawStrandSubpaths = function (startResidueNumber, stopResidueNumber, index, parentSSEId, color) {
         var _this = this;
         var totalAaInPath = (stopResidueNumber - startResidueNumber) + 1;
         // height of one subelement
@@ -643,7 +649,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         //create subsections/paths
         var dValArr = [];
         for (var subPathIndex = 0; subPathIndex < totalAaInPath; subPathIndex++) {
-            var subPathObj = { type: 'strands', elementIndex: index, parentSSEId: parentSSEId };
+            var subPathObj = { type: 'strands', elementIndex: index, parentSSEId: parentSSEId, color: color };
             if (subPathIndex === 0) {
                 subPathObj['residue_number'] = startResidueNumber;
                 subPathObj['pathData'] = [
@@ -796,6 +802,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             entityId: this.entityId,
             chainId: this.chainId,
             parentSSEId: eleData.parentSSEId || undefined,
+            color: eleData.color,
         });
     };
     PdbTopologyViewerPlugin.prototype.mouseoutAction = function (eleObj, eleData) {
@@ -831,10 +838,11 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             entityId: this.entityId,
             chainId: this.chainId,
             parentSSEId: eleData.parentSSEId || undefined,
+            color: eleData.color,
         });
     };
     // Draws subelements of helices (i.e. residues, that are highlighted on hover)
-    PdbTopologyViewerPlugin.prototype.drawHelicesSubpaths = function (startResidueNumber, stopResidueNumber, index, curveYdiff, parentSSEId) {
+    PdbTopologyViewerPlugin.prototype.drawHelicesSubpaths = function (startResidueNumber, stopResidueNumber, index, curveYdiff, parentSSEId, color) {
         var _this = this;
         curveYdiff = 0;
         var diffVal = 5;
@@ -868,7 +876,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         var subPathObj = {};
         if (curveYdiff === 0) {
             for (var subPathIndex = 0; subPathIndex < totalAaInPath; subPathIndex++) {
-                subPathObj = { type: 'helices', parentSSEId: parentSSEId };
+                subPathObj = { type: 'helices', parentSSEId: parentSSEId, color: color };
                 if (subPathIndex === 0) {
                     if (this.scaledPointsArr[3] < this.scaledPointsArr[9]) {
                         subPathObj['residue_number'] = stopResidueNumber;
@@ -1344,7 +1352,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             var xCenterScaled = _this_1.xScale(secStrData.center.x);
                             var yCenterScaled = _this_1.yScale(secStrData.center.y);
                             //create subsections/paths
-                            _this_1.drawStrandSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, secStrData.twoDProtsSSEId);
+                            _this_1.drawStrandSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, secStrData.twoDProtsSSEId, secStrData.color);
                             //Create mask to restore shape
                             _this_1.drawStrandMaskShape(secStrDataIndex);
                             //bring original/complete helices in front newEle
@@ -1359,7 +1367,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             var xCenterScaled = _this_1.xScale(secStrData.center.x);
                             var yCenterScaled = _this_1.yScale(secStrData.center.y);
                             //create subsections/paths
-                            _this_1.drawHelicesSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, curveYdiff, secStrData.twoDProtsSSEId);
+                            _this_1.drawHelicesSubpaths(secStrData.start, secStrData.stop, secStrDataIndex, curveYdiff, secStrData.twoDProtsSSEId, secStrData.color);
                             //Create mask to restore shape
                             _this_1.drawHelicesMaskShape(secStrDataIndex);
                             // //bring original/complete helices in front
@@ -1950,7 +1958,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 });
                 // can be undefined e.g. if user hovers over coil or some other domain on 3D that is not displayed on 1D/2D
                 if (targetSSE_1) {
-                    var overprotLabel = targetSSE_1.twoDProtsSSEId;
+                    // filter overprot diagram JSON nodes to find the node which color equals to targetSSE color, and get label of that SSE to fire do.hover event on it
+                    var overprotLabel = overprotDiagramJson.nodes.filter(function (i) { return i.color === targetSSE_1.color; })[0].label;
                     document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
                         detail: {
                             'sses': [{ 'label': overprotLabel }]
