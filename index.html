@@ -666,6 +666,8 @@
 					instance.render2D();
 					instance.render3D();
 					matchLabels1Dto2D();
+					// assign to TopologyViewer attribute the same object as to Integrated viewer attribute, so that 3D => 1D interactivity can be theoretically handled in index.ts 
+					instance.plugins.twoD.instance.matchingLabels1Dto2D = instance.matchingLabels1Dto2D;
 				});
 			});
 		}		
