@@ -1,3 +1,4 @@
+declare function colorNameToHex(colorName: any): string | CanvasGradient | CanvasPattern;
 declare function getKeyByValue(object: any, value: any): string | undefined;
 declare function getStartStopCoords(d3selection: any): {
     startCoords: {

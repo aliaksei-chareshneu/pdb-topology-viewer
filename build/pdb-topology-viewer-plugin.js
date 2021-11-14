@@ -50,6 +50,11 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function (toElement) {
     return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
 };
+function colorNameToHex(colorName) {
+    var ctx = document.createElement('canvas').getContext('2d');
+    ctx.fillStyle = colorName;
+    return ctx.fillStyle;
+}
 // get object key by value
 function getKeyByValue(object, value) {
     return Object.keys(object).find(function (key) { return object[key] === value; });
@@ -232,13 +237,17 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             'x': center.x - lowerLeft.x,
             'y': upperRight.y - center.y
         };
+        var colorHex = sse[1].color;
+        if (sse[1].color[0] !== '#') {
+            colorHex = colorNameToHex(sse[1].color);
+        }
         var topologyData = {
             'start': Number(sse[1].residues[0]),
             'stop': Number(sse[1].residues[1]),
             'majoraxis': Number(sse[1].size),
             'minoraxis': MINORAXIS,
             'center': centerYReversed,
-            'color': sse[1].color,
+            'color': colorHex,
             'angle': sse[1].angles,
             'twoDProtsSSEId': sse[0].replace(/\?/g, ''),
             'path': undefined,

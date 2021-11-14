@@ -10,10 +10,16 @@ SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformTo
 
 };
 
+function colorNameToHex(colorName){
+	const ctx = document.createElement('canvas').getContext('2d');
+	ctx.fillStyle = colorName;
+	return ctx.fillStyle;
+}
+
 // get object key by value
-	function getKeyByValue(object, value) {
-		return Object.keys(object).find(key => object[key] === value);
-	}
+function getKeyByValue(object, value) {
+	return Object.keys(object).find(key => object[key] === value);
+}
 
 // Function that takes d3 selection and returns 'startCoord' and 'stopCoord' depending on SSE type (helix/sheet)
 // Used to draw connecting coils
@@ -215,13 +221,18 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 			'y': upperRight.y - center.y
 		};
 		
+		let colorHex = sse[1].color;
+		if (sse[1].color[0] !== '#') {
+			colorHex = colorNameToHex(sse[1].color);
+		}
+		
 		const topologyData = {
 			'start': Number(sse[1].residues[0]),
 			'stop': Number(sse[1].residues[1]),
 			'majoraxis': Number(sse[1].size),
 			'minoraxis': MINORAXIS,
 			'center': centerYReversed,
-			'color': sse[1].color,
+			'color': colorHex,
 			'angle': sse[1].angles,
 			'twoDProtsSSEId': sse[0].replace(/\?/g, ''),
 			'path': undefined,
