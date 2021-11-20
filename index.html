@@ -387,19 +387,10 @@
 					viewerInstance.visual.clearHighlight();
 				});
 				
-				<!-- TODO: add visual highlight based on d and this -->
-				
 				document.addEventListener('PDB.topologyComponent.click', (event) => {
 				});
 				
-				<!-- document.addEventListener('PDB.overprot.select', (event) => { -->
-					<!-- console.log('PDB.overprot.select', event); -->
-					<!-- for (const viewer of document.querySelectorAll('overprot-viewer')) { -->
-						<!-- viewer.dispatchEvent(new CustomEvent('PDB.overprot.do.select', {detail: event.detail})); -->
-					<!-- } -->
-				<!-- }); -->
-				
-				<!-- H5 helix is not present in 2D, so it is not highlighted -->
+				// H5 helix is not present in 2D, so it is not highlighted
 				document.addEventListener('PDB.overprot.hover', (event) => {
 					if (event.detail.sses[0]) {
 						console.log('PDB.overprot.hover', event);
@@ -437,7 +428,7 @@
 						viewerInstance.visual.highlight({ data: molstarData, color: {r:255,g:255,b:255},});
 						
 					} else {
-						<!-- empty detail.label arr => event was fired onmouseover/offhover -->
+						// empty detail.label arr => event was fired onmouseover/offhover
 						d3.selectAll('.topologyEle.topologyEleTopLayer')
 						.attr('fill', 'none')
 						.attr('fill-opacity', null)
@@ -498,7 +489,7 @@
 			}
 			
 			render1D() {
-				<!-- Actually insert in HTML rather than render -->
+				// Actually insert in HTML rather than render
 				const html = `<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-${this.familyId}.json' width=1800 height=200 color-method='rainbow' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>`;
 				
 				const container = document.getElementById('overprot-wrapper');
@@ -644,27 +635,13 @@
 		}		
 		
 		
-		<!-- Topology Viewer (2D) part -->
+		// Topology Viewer (2D) part
 		document.addEventListener('DOMContentLoaded', () => {
 
 
 		  });
 	// })();
 	</script>
-	<!-- Mol* & OverProt script (e.g. events) -->
-	<script>
-	
-	</script>
-	<!-- PDB Topology component script -->
-    <script>
-      
-    </script>
-	
-	<!-- PDB Mol* component script -->
-	<script>
-      
-	  
-    </script>
   </body>
 
 </html>
