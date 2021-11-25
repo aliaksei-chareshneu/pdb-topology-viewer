@@ -634,6 +634,21 @@
 			});
 		}		
 		
+		async function _testing() {
+			const baseUrl = 'https://pdb-structure-colored-by-ed-coverage-of-atoms.000webhostapp.com/cors-host/per-protein-jsons/'
+			const filenames = [
+				'image-1b4f.json',
+				'image-1b33.json',
+				'image-1tqn.json',
+			];
+			
+			const jsons = await Promise.all(filenames.map(filename => getJSONfromAPI(baseUrl + filename)));
+			console.log(jsons);
+			
+			for (let json of jsons) {
+				measureExecTime(convert2DProtsJSONtoTopologyAPIJSON, [json, 'abcd', '1', 'A']);
+			}
+		};
 		
 		// Topology Viewer (2D) part
 		document.addEventListener('DOMContentLoaded', () => {

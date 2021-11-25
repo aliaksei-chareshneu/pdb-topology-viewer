@@ -1,3 +1,4 @@
+declare function getJSONfromAPI(url: any): Promise<any>;
 declare function measureExecTime(foo: any, args: any): void;
 declare function getStartStopCoords(d3selection: any): {
     startCoords: {

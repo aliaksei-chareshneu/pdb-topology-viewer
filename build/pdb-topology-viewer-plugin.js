@@ -46,13 +46,31 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 // No, it does not need for us - as we do it as straight lines. Just separate them on clickable elements
 // TODO: drawing of helices and strands can be done via rotation matrix as well. Maybe it can help to solve precision location issues (coils vs everything else)
 // TODO: residue numbering in subpath of some helices seem to be wrong. Angle problems? +/-
+function getJSONfromAPI(url) {
+    return __awaiter(this, void 0, void 0, function () {
+        var response, json;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0: return [4 /*yield*/, fetch(url)];
+                case 1:
+                    response = _a.sent();
+                    return [4 /*yield*/, response.json()];
+                case 2:
+                    json = _a.sent();
+                    return [2 /*return*/, json];
+            }
+        });
+    });
+}
+;
 function measureExecTime(foo, args) {
     var start = performance.now();
     foo.apply(void 0, args);
     var end = performance.now();
-    console.log(foo.name + " took " + (end - start) + " ms");
-    console.log.apply(console, __spreadArrays(['Args: '], args));
+    console.debug(foo.name + " took " + (end - start) + " ms");
+    console.debug.apply(console, __spreadArrays(['Args: '], args));
 }
+;
 // Polyfill for getTransformToElement
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function (toElement) {
     return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
@@ -210,7 +228,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
         'upperRight': convertPathCartesianToYReversed([upperRight.x, upperRight.y], lowerLeft, upperRight),
         'lowerLeft': convertPathCartesianToYReversed([lowerLeft.x, lowerLeft.y], lowerLeft, upperRight),
     };
-    console.log(outputJSON);
+    // console.log(outputJSON);
     // chainID is chainId internally used by TopologyViewer, as it will be used in drawTopologyStructures to access that topology data, and we here emulate the response of PDBe topology API
     // outputJSON[entryID]['1'][chainID] = {
     outputJSON[entryID][entityID][chainID] = {
@@ -223,7 +241,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
     var inputSSEs = Object.entries(inputJson.sses);
     for (var _i = 0, inputSSEs_1 = inputSSEs; _i < inputSSEs_1.length; _i++) {
         var sse = inputSSEs_1[_i];
-        console.log(sse);
+        // console.log(sse);
         // TEMPORARY: trying to guess the right multiplicator for coordinates (SSEs are too densly packed, though angles seem ok)
         var center = {
             // 'x': sse[1].layout[0] * 6.5,
@@ -278,8 +296,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
     // separate array for calculating coils data
     var helicesAndSheets = __spreadArrays(outputJSON[entryID][entityID][chainID].helices, outputJSON[entryID][entityID][chainID].strands);
     helicesAndSheets.sort(function (a, b) { return a.stop < b.start ? -1 : 1; });
-    console.log("Sorted helicesAndSheets array");
-    console.log(helicesAndSheets);
+    // console.log(`Sorted helicesAndSheets array`);
+    // console.log(helicesAndSheets);
     for (var i = 1; i < helicesAndSheets.length; i++) {
         var sseBefore = helicesAndSheets[i - 1];
         var sseAfter = helicesAndSheets[i];
@@ -294,9 +312,9 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             'color': sseAfter.color,
         };
         var coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
-        console.log(coilStartPoint);
+        // console.log(coilStartPoint);
         var coilStopPoint = applyRotationMatrix(sseAfter.startCoord, sseAfter.center, sseAfter.angle);
-        console.log(coilStopPoint);
+        // console.log(coilStopPoint);
         // Calculate path based on data from the two SSEs (the one before and the one after this coil)
         // TODO: apply corresponding rotation matrices to each point
         coilTopologyData.path = [

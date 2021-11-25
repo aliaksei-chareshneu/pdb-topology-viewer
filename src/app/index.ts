@@ -3,13 +3,19 @@
 // TODO: drawing of helices and strands can be done via rotation matrix as well. Maybe it can help to solve precision location issues (coils vs everything else)
 // TODO: residue numbering in subpath of some helices seem to be wrong. Angle problems? +/-
 
+async function getJSONfromAPI(url) {
+	const response = await fetch(url);
+	const json = await response.json();
+	return json;
+};
+
 function measureExecTime(foo, args) {
 	const start = performance.now();
 	foo(...args);
 	const end = performance.now();
-	console.log(`${foo.name} took ${end - start} ms`);
-	console.log('Args: ', ...args);
-}
+	console.debug(`${foo.name} took ${end - start} ms`);
+	console.debug('Args: ', ...args);
+};
 
 // Polyfill for getTransformToElement
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement ||        function(toElement) {
@@ -189,7 +195,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 		'upperRight': convertPathCartesianToYReversed([upperRight.x, upperRight.y], lowerLeft, upperRight),
 		'lowerLeft': convertPathCartesianToYReversed([lowerLeft.x, lowerLeft.y], lowerLeft, upperRight),
 	}
-	console.log(outputJSON);
+	// console.log(outputJSON);
 	// chainID is chainId internally used by TopologyViewer, as it will be used in drawTopologyStructures to access that topology data, and we here emulate the response of PDBe topology API
 	// outputJSON[entryID]['1'][chainID] = {
 	outputJSON[entryID][entityID][chainID] = {
@@ -203,7 +209,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 	const inputSSEs = Object.entries(inputJson.sses);
 	
 	for (const sse of inputSSEs) {
-		console.log(sse);
+		// console.log(sse);
 		
 		// TEMPORARY: trying to guess the right multiplicator for coordinates (SSEs are too densly packed, though angles seem ok)
 		const center = {
@@ -262,8 +268,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 	// separate array for calculating coils data
 	const helicesAndSheets = [...outputJSON[entryID][entityID][chainID].helices, ...outputJSON[entryID][entityID][chainID].strands];
 	helicesAndSheets.sort((a, b) => a.stop < b.start ? -1 : 1);
-	console.log(`Sorted helicesAndSheets array`);
-	console.log(helicesAndSheets);
+	// console.log(`Sorted helicesAndSheets array`);
+	// console.log(helicesAndSheets);
 	
 	for (let i = 1; i < helicesAndSheets.length; i++) {
 		const sseBefore = helicesAndSheets[i - 1];
@@ -280,9 +286,9 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 		};
 		
 		const coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
-		console.log(coilStartPoint);
+		// console.log(coilStartPoint);
 		const coilStopPoint = applyRotationMatrix(sseAfter.startCoord, sseAfter.center, sseAfter.angle);
-		console.log(coilStopPoint);
+		// console.log(coilStopPoint);
 		
 		// Calculate path based on data from the two SSEs (the one before and the one after this coil)
 		// TODO: apply corresponding rotation matrices to each point
