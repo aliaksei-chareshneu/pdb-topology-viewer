@@ -3,6 +3,14 @@
 // TODO: drawing of helices and strands can be done via rotation matrix as well. Maybe it can help to solve precision location issues (coils vs everything else)
 // TODO: residue numbering in subpath of some helices seem to be wrong. Angle problems? +/-
 
+function measureExecTime(foo, args) {
+	const start = performance.now();
+	foo(...args);
+	const end = performance.now();
+	console.log(`${foo.name} took ${end - start} ms`);
+	console.log('Args: ', ...args);
+}
+
 // Polyfill for getTransformToElement
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement ||        function(toElement) {
 

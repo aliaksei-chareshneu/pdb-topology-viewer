@@ -46,6 +46,13 @@ var __spreadArrays = (this && this.__spreadArrays) || function () {
 // No, it does not need for us - as we do it as straight lines. Just separate them on clickable elements
 // TODO: drawing of helices and strands can be done via rotation matrix as well. Maybe it can help to solve precision location issues (coils vs everything else)
 // TODO: residue numbering in subpath of some helices seem to be wrong. Angle problems? +/-
+function measureExecTime(foo, args) {
+    var start = performance.now();
+    foo.apply(void 0, args);
+    var end = performance.now();
+    console.log(foo.name + " took " + (end - start) + " ms");
+    console.log.apply(console, __spreadArrays(['Args: '], args));
+}
 // Polyfill for getTransformToElement
 SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformToElement || function (toElement) {
     return toElement.getScreenCTM().inverse().multiply(this.getScreenCTM());
