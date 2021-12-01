@@ -176,6 +176,11 @@ function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
 // Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chainID) {
     var _a;
+    for (var _i = 0, arguments_1 = arguments; _i < arguments_1.length; _i++) {
+        var arg = arguments_1[_i];
+        if (typeof arg == 'undefined')
+            return undefined;
+    }
     // TODO: try different for both if something goes wrong
     // const MINORAXIS = 3 * 2 / 5;
     // const CONVEXITY = 2 / 5;
@@ -221,8 +226,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
         'extents': [],
     };
     var inputSSEs = Object.entries(inputJson.sses);
-    for (var _i = 0, inputSSEs_1 = inputSSEs; _i < inputSSEs_1.length; _i++) {
-        var sse = inputSSEs_1[_i];
+    for (var _b = 0, inputSSEs_1 = inputSSEs; _b < inputSSEs_1.length; _b++) {
+        var sse = inputSSEs_1[_b];
         console.log(sse);
         // TEMPORARY: trying to guess the right multiplicator for coordinates (SSEs are too densly packed, though angles seem ok)
         var center = {
@@ -469,6 +474,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 //Validate required data in the API result set (0, 2, 4)
                 if (typeof result[0] == 'undefined' || typeof result[2] == 'undefined' || typeof result[4] == 'undefined') {
                     _this_1.displayError();
+                    if (typeof result[2] == 'undefined')
+                        alert('Domain data is not avaialble for the given domain. Please select another domain');
                     return;
                 }
                 _this_1.apiData = result;

@@ -151,6 +151,10 @@ function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
 // TODO: Write better function description
 // Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chainID) {
+	for (let arg of arguments) {
+		if (typeof arg == 'undefined') return undefined;
+	}
+	
 	// TODO: try different for both if something goes wrong
 	// const MINORAXIS = 3 * 2 / 5;
 	// const CONVEXITY = 2 / 5;
@@ -398,6 +402,7 @@ class PdbTopologyViewerPlugin {
                 //Validate required data in the API result set (0, 2, 4)
                 if(typeof result[0] == 'undefined' || typeof result[2] == 'undefined' || typeof result[4] == 'undefined'){ 
                     this.displayError();
+					if (typeof result[2] == 'undefined') alert('Domain data is not avaialble for the given domain. Please select another domain');
                     return;
                 }
 

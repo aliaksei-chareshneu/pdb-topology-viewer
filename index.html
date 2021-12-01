@@ -581,6 +581,7 @@
 						ele.selectpicker('refresh');
 					} catch(error) {
 						console.log(error);
+						alert('An error occured. Most likely the selected family is empty (i.e. has no domains). Please select another family.');
 					}
 				// if it was a programmatic change (on page with query params we set selectors values equal to that params)
 				} else if (clickedIndex === null && !instance.wellcomePage) {
