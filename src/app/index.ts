@@ -157,6 +157,10 @@ function convertPathCartesianToYReversed(pathCartesian, lowerLeft, upperRight) {
 // TODO: Write better function description
 // Converts 2DProts output JSON to "PDBe-topology-API-like" JSON suitable for drawing SSEs via modified PDB Topology Component
 function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chainID) {
+	for (let arg of arguments) {
+		if (typeof arg == 'undefined') return undefined;
+	}
+	
 	// TODO: try different for both if something goes wrong
 	// const MINORAXIS = 3 * 2 / 5;
 	// const CONVEXITY = 2 / 5;
@@ -440,7 +444,7 @@ class PdbTopologyViewerPlugin {
 				
 				copies.each(function() {maskpathMask.append(() => this)})
 				
-                this.createDomainDropdown();
+                // this.createDomainDropdown();
 
                 if(this.subscribeEvents) this.subscribeWcEvents();
 
@@ -505,11 +509,13 @@ class PdbTopologyViewerPlugin {
 			// Version with parsing HTML from 2DProts webpage to get timestamp. Works for many domains, but not for all. Remember to switch to domain ID with underscore (above)
 			// `https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/${twoDProtsTimestamp}/image-${twoDprotsDomainId}.json`,
 			// Version with working redirect and allow origin *
-			`https://2dprots.ncbr.muni.cz/files/domain/${twoDprotsDomainId}/json`,
+			// `https://2dprots.ncbr.muni.cz/files/domain/${twoDprotsDomainId}/json`,
+			`https://pdb-structure-colored-by-ed-coverage-of-atoms.000webhostapp.com/cors-host/per-protein-jsons/image-1tqn.json`,
 			// For the generalized redirect version below:
 			// Access to fetch at 'http://2dprots.ncbr.muni.cz/files/domain/2bg9A01/json' (redirected from 'https://2dprots.ncbr.muni.cz/files/domain/2bg9A01/latest/json') from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
 			// `https://2dprots.ncbr.muni.cz/files/domain/${twoDprotsDomainId}/latest/json`,
 			`https://www.ebi.ac.uk/pdbe/api/validation/residuewise_outlier_summary/entry/${pdbId}`,
+			// The only one which needs chainId, and is related to dropdown in bottom menu of Topology Viewer
             `https://www.ebi.ac.uk/pdbe/api/pdb/entry/polymer_coverage/${pdbId}/chain/${chainId}`
         ]
 		console.log(dataUrls[2]);

@@ -565,7 +565,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                     // Version with parsing HTML from 2DProts webpage to get timestamp. Works for many domains, but not for all. Remember to switch to domain ID with underscore (above)
                     // `https://2dprots.ncbr.muni.cz/static/web/generated-${familyId}/${twoDProtsTimestamp}/image-${twoDprotsDomainId}.json`,
                     // Version with working redirect and allow origin *
-                    "https://2dprots.ncbr.muni.cz/files/domain/" + twoDprotsDomainId + "/json",
+                    // `https://2dprots.ncbr.muni.cz/files/domain/${twoDprotsDomainId}/json`,
+                    "https://pdb-structure-colored-by-ed-coverage-of-atoms.000webhostapp.com/cors-host/per-protein-jsons/image-1tqn.json",
                     // For the generalized redirect version below:
                     // Access to fetch at 'http://2dprots.ncbr.muni.cz/files/domain/2bg9A01/json' (redirected from 'https://2dprots.ncbr.muni.cz/files/domain/2bg9A01/latest/json') from origin 'null' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. If an opaque response serves your needs, set the request's mode to 'no-cors' to fetch the resource with CORS disabled.
                     // `https://2dprots.ncbr.muni.cz/files/domain/${twoDprotsDomainId}/latest/json`,
