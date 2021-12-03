@@ -328,7 +328,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
             qualityYellow: 'rgb(364.2857142857143,364.2857142857143,75.71428571428572)',
             qualityOrange: 'rgb(291.42857142857144,121.42857142857143,0)'
         };
-        this.displayStyle = 'border:1px solid #696969;';
+        this.displayStyle = 'border:1px solid #696969;height:100%;';
         this.errorStyle = 'border:1px solid #696969; height:54%; padding-top:46%; text-align:center; font-weight:bold;';
         this.menuStyle = 'position:relative;height:38px;line-height:38px;background-color:#696969;padding: 0 10px;font-size:16px; color: #efefef;';
         this.twoDProtsData = {
@@ -1203,13 +1203,10 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         var svgSectionHt = targetEleHt - 40;
         var svgSectionWt = targetEleWt;
         svgSection.style.height = svgSectionHt + 'px';
-        //Set svg dimensions
-        var svgHt = svgSectionHt - 20;
-        var svgWt = svgSectionWt - 5;
         // Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
         // Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
         // Also added another mask to make .residueHighlight paths appearing on 3D hover in 2D fit the shape of strand arrows
-        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:" + svgWt + "px;height:" + svgHt + "px;margin:10px 0;\">\t\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t\t<mask id=\"residueHighlight3Dto2DMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
+        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:calc(100% - 5px);height:calc(100% - 40px);margin:10px 0;\">\t\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t\t<mask id=\"residueHighlight3Dto2DMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
         this.svgEle = d3.select(this.targetEle).select('.topoSvg');
         this.getDomainRange();
         this.scaledPointsArr = [];

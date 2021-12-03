@@ -317,7 +317,7 @@ class PdbTopologyViewerPlugin {
         qualityOrange: 'rgb(291.42857142857144,121.42857142857143,0)'
     }
 
-    displayStyle = 'border:1px solid #696969;';
+    displayStyle = 'border:1px solid #696969;height:100%;';
     errorStyle = 'border:1px solid #696969; height:54%; padding-top:46%; text-align:center; font-weight:bold;';
     menuStyle = 'position:relative;height:38px;line-height:38px;background-color:#696969;padding: 0 10px;font-size:16px; color: #efefef;';
 	
@@ -1224,13 +1224,10 @@ class PdbTopologyViewerPlugin {
         const svgSectionWt = targetEleWt;
         svgSection.style.height = svgSectionHt+'px';
 
-        //Set svg dimensions
-        const svgHt = svgSectionHt - 20;
-        const svgWt = svgSectionWt - 5;
 		// Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
 		// Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
 		// Also added another mask to make .residueHighlight paths appearing on 3D hover in 2D fit the shape of strand arrows
-        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:${svgWt}px;height:${svgHt}px;margin:10px 0;">	
+        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:calc(100% - 5px);height:calc(100% - 40px);margin:10px 0;">	
 			<defs>
 				<mask id="cutoutCoilsMask" maskUnits="objectBoundingBox" x='0%' y='0%' width='100%' height='100%'>
 					<rect
