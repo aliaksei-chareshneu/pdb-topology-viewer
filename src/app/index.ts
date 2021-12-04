@@ -207,9 +207,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 	const inputSSEs = Object.entries(inputJson.sses);
 	
 	for (const sse of inputSSEs) {
-		console.log(sse);
+		// console.log(sse);
 		
-		// TEMPORARY: trying to guess the right multiplicator for coordinates (SSEs are too densly packed, though angles seem ok)
 		const center = {
 			// 'x': sse[1].layout[0] * 6.5,
 			// 'y': sse[1].layout[1] * 5.0,
@@ -284,9 +283,9 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 		};
 		
 		const coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
-		console.log(coilStartPoint);
+		// console.log(coilStartPoint);
 		const coilStopPoint = applyRotationMatrix(sseAfter.startCoord, sseAfter.center, sseAfter.angle);
-		console.log(coilStopPoint);
+		// console.log(coilStopPoint);
 		
 		// Calculate path based on data from the two SSEs (the one before and the one after this coil)
 		// TODO: apply corresponding rotation matrices to each point
@@ -1073,8 +1072,8 @@ class PdbTopologyViewerPlugin {
             }
         
         }
-		console.log(`subPathCordsArr for .coils${index}`)
-		console.log(subPathCordsArr)
+		// console.log(`subPathCordsArr for .coils${index}`)
+		// console.log(subPathCordsArr)
         
         if(startResidueNumber !== -1 && stopResidueNumber !== -1){
             this.svgEle.selectAll('.subpath-coils'+index).remove();
@@ -1222,12 +1221,13 @@ class PdbTopologyViewerPlugin {
         const svgSection:any = this.targetEle.querySelector('.svgSection');
         const svgSectionHt = targetEleHt - 40;
         const svgSectionWt = targetEleWt;
-        svgSection.style.height = svgSectionHt+'px';
+        // svgSection.style.height = svgSectionHt+'px';
+		svgSection.style.height = 'calc(100% - 38px)';
 
 		// Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
 		// Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
 		// Also added another mask to make .residueHighlight paths appearing on 3D hover in 2D fit the shape of strand arrows
-        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:calc(100% - 5px);height:calc(100% - 40px);margin:10px 0;">	
+        svgSection.innerHTML = `<svg class="topoSvg" preserveAspectRatio="xMidYMid meet" viewBox="0 0 100 100" style="width:calc(100% - 5px);height:calc(100% - 20px);margin:10px 0;">	
 			<defs>
 				<mask id="cutoutCoilsMask" maskUnits="objectBoundingBox" x='0%' y='0%' width='100%' height='100%'>
 					<rect
@@ -1417,7 +1417,7 @@ class PdbTopologyViewerPlugin {
 
 							const allElementsBelongingToStrand = d3.selectAll(`.strands${secStrDataIndex}, .maskpath-strands${secStrDataIndex}, .subpath-strands${secStrDataIndex}`)
 								.attr('transform', `rotate(${secStrData.angle}, ${xCenterScaled}, ${yCenterScaled})`);
-							console.log(allElementsBelongingToStrand);
+							// console.log(allElementsBelongingToStrand);
                         }
                         
                         //for helices
@@ -1438,7 +1438,7 @@ class PdbTopologyViewerPlugin {
 							
 							const allElementsBelongingToHelix = d3.selectAll(`.helices${secStrDataIndex}, .maskpath-helices${secStrDataIndex}, .subpath-helices${secStrDataIndex}`)
 								.attr('transform', `rotate(${secStrData.angle}, ${xCenterScaled}, ${yCenterScaled})`);
-							console.log(allElementsBelongingToHelix);
+							// console.log(allElementsBelongingToHelix);
                         }
                     
                         //for coils
@@ -2100,7 +2100,7 @@ class PdbTopologyViewerPlugin {
     handleMolstarEvents(e:any, eType:string){
 
         if(typeof e.eventData !== 'undefined' && Object.keys(e.eventData).length > 0){
-            console.log(e)
+            // console.log(e)
             //Remove previous selection / highlight
             let selectionPathClass = 'residueSelection';
             if(eType == 'mouseover'){

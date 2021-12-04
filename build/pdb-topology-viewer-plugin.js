@@ -228,8 +228,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
     var inputSSEs = Object.entries(inputJson.sses);
     for (var _b = 0, inputSSEs_1 = inputSSEs; _b < inputSSEs_1.length; _b++) {
         var sse = inputSSEs_1[_b];
-        console.log(sse);
-        // TEMPORARY: trying to guess the right multiplicator for coordinates (SSEs are too densly packed, though angles seem ok)
+        // console.log(sse);
         var center = {
             // 'x': sse[1].layout[0] * 6.5,
             // 'y': sse[1].layout[1] * 5.0,
@@ -299,9 +298,9 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             'color': sseAfter.color,
         };
         var coilStartPoint = applyRotationMatrix(sseBefore.stopCoord, sseBefore.center, sseBefore.angle);
-        console.log(coilStartPoint);
+        // console.log(coilStartPoint);
         var coilStopPoint = applyRotationMatrix(sseAfter.startCoord, sseAfter.center, sseAfter.angle);
-        console.log(coilStopPoint);
+        // console.log(coilStopPoint);
         // Calculate path based on data from the two SSEs (the one before and the one after this coil)
         // TODO: apply corresponding rotation matrices to each point
         coilTopologyData.path = [
@@ -1079,8 +1078,8 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                 subPathCordsArr.push(newSubPathCords);
             }
         }
-        console.log("subPathCordsArr for .coils" + index);
-        console.log(subPathCordsArr);
+        // console.log(`subPathCordsArr for .coils${index}`)
+        // console.log(subPathCordsArr)
         if (startResidueNumber !== -1 && stopResidueNumber !== -1) {
             this.svgEle.selectAll('.subpath-coils' + index).remove();
             this.svgEle.selectAll('.subpath-coils' + index)
@@ -1202,11 +1201,12 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
         var svgSection = this.targetEle.querySelector('.svgSection');
         var svgSectionHt = targetEleHt - 40;
         var svgSectionWt = targetEleWt;
-        svgSection.style.height = svgSectionHt + 'px';
+        // svgSection.style.height = svgSectionHt+'px';
+        svgSection.style.height = 'calc(100% - 38px)';
         // Modified svg content by adding defs with mask with white rect covering the whole svg (to make each coil visible)
         // Later paths identical to topoEles of strands and helices will be added to that mask with fill=black to cutout coils in regions where they overlap with helices or strands
         // Also added another mask to make .residueHighlight paths appearing on 3D hover in 2D fit the shape of strand arrows
-        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:calc(100% - 5px);height:calc(100% - 40px);margin:10px 0;\">\t\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t\t<mask id=\"residueHighlight3Dto2DMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
+        svgSection.innerHTML = "<svg class=\"topoSvg\" preserveAspectRatio=\"xMidYMid meet\" viewBox=\"0 0 100 100\" style=\"width:calc(100% - 5px);height:calc(100% - 20px);margin:10px 0;\">\t\n\t\t\t<defs>\n\t\t\t\t<mask id=\"cutoutCoilsMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t\t<mask id=\"residueHighlight3Dto2DMask\" maskUnits=\"objectBoundingBox\" x='0%' y='0%' width='100%' height='100%'>\n\t\t\t\t\t<rect\n\t\t\t\t\t\tclass=\"maskRect\"\n\t\t\t\t\t\tx=\"0\"\n\t\t\t\t\t\ty=\"0\"\n\t\t\t\t\t\twidth=\"100\"\n\t\t\t\t\t\theight=\"100\"\n\t\t\t\t\t\tfill=\"white\" />\n\t\t\t\t</mask>\n\t\t\t</defs>\n\t\t</svg>";
         this.svgEle = d3.select(this.targetEle).select('.topoSvg');
         this.getDomainRange();
         this.scaledPointsArr = [];
@@ -1363,7 +1363,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             _this_1.svgEle._groups[0][0].append(newEle.node());
                             var allElementsBelongingToStrand = d3.selectAll(".strands" + secStrDataIndex + ", .maskpath-strands" + secStrDataIndex + ", .subpath-strands" + secStrDataIndex)
                                 .attr('transform', "rotate(" + secStrData.angle + ", " + xCenterScaled + ", " + yCenterScaled + ")");
-                            console.log(allElementsBelongingToStrand);
+                            // console.log(allElementsBelongingToStrand);
                         }
                         //for helices
                         if (secStrType === 'helices') {
@@ -1378,7 +1378,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
                             _this_1.svgEle._groups[0][0].append(newEle.node());
                             var allElementsBelongingToHelix = d3.selectAll(".helices" + secStrDataIndex + ", .maskpath-helices" + secStrDataIndex + ", .subpath-helices" + secStrDataIndex)
                                 .attr('transform', "rotate(" + secStrData.angle + ", " + xCenterScaled + ", " + yCenterScaled + ")");
-                            console.log(allElementsBelongingToHelix);
+                            // console.log(allElementsBelongingToHelix);
                         }
                         //for coils
                         if (secStrType === 'coils') {
@@ -1930,7 +1930,7 @@ var PdbTopologyViewerPlugin = /** @class */ (function () {
     };
     PdbTopologyViewerPlugin.prototype.handleMolstarEvents = function (e, eType) {
         if (typeof e.eventData !== 'undefined' && Object.keys(e.eventData).length > 0) {
-            console.log(e);
+            // console.log(e)
             //Remove previous selection / highlight
             var selectionPathClass = 'residueSelection';
             if (eType == 'mouseover') {
