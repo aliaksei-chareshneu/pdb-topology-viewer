@@ -60,7 +60,7 @@ SVGElement.prototype.getTransformToElement = SVGElement.prototype.getTransformTo
 // Function that takes d3 selection and returns 'startCoord' and 'stopCoord' depending on SSE type (helix/sheet)
 // Used to draw connecting coils
 function getStartStopCoords(d3selection) {
-    var dAttrContent = d3selection.node().pathSegList._list;
+    var pathSegList = d3selection.node().pathSegList;
     var totalPathLength = d3selection.node().getTotalLength();
     var coords = {
         'startCoords': {
@@ -74,7 +74,7 @@ function getStartStopCoords(d3selection) {
     };
     if (d3selection.classed('helices')) {
         // length of longer part of capsule-like structure
-        var vertLt = Math.hypot(Math.abs(dAttrContent[1].x - dAttrContent[2].x), Math.abs(dAttrContent[1].y - dAttrContent[2].y));
+        var vertLt = Math.hypot(Math.abs(pathSegList.getItem(1).x - pathSegList.getItem(2).x), Math.abs(pathSegList.getItem(1).y - pathSegList.getItem(2).y));
         // length of curved part of capsule-like structure
         var curveLt = (totalPathLength - (2 * vertLt)) / 2;
         var stopSVGPoint = d3selection.node().getPointAtLength(curveLt / 2);
@@ -86,12 +86,12 @@ function getStartStopCoords(d3selection) {
     }
     else if (d3selection.classed('strands')) {
         // here startCoord is based on 'average' of two points [0,1] and [12,13]
-        var p1 = dAttrContent[0];
-        var p2 = dAttrContent[6];
-        coords.startCoords.x = (p1._x + p2._x) / 2;
-        coords.startCoords.y = (p1._y + p2._y) / 2;
-        coords.stopCoords.x = dAttrContent[3]._x;
-        coords.stopCoords.y = dAttrContent[3]._y;
+        var p1 = pathSegList.getItem(0);
+        var p2 = pathSegList.getItem(6);
+        coords.startCoords.x = (p1.x + p2.x) / 2;
+        coords.startCoords.y = (p1.y + p2.y) / 2;
+        coords.stopCoords.x = pathSegList.getItem(3).x;
+        coords.stopCoords.y = pathSegList.getItem(3).y;
     }
     return coords;
 }
