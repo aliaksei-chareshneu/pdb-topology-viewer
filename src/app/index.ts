@@ -237,7 +237,7 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
 		};
 		
 		let sseType = sse[0].charAt(0);
-		if (sseType === '?') {
+		if (HELICES_CHARS.indexOf(sseType) < 0 && STRANDS_CHARS.indexOf(sseType) < 0) {
 			sseType = sse[0].charAt(1);
 		}
 		if (HELICES_CHARS.indexOf(sseType) > -1) {
