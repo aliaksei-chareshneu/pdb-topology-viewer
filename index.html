@@ -1,275 +1,156 @@
 <html>
 
-  <head>
-	<!-- Bootstrap selects CSS & JS, popper js is required -->
-	<!-- <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css"> -->
-	<!-- <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" -->
-        <!-- integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" -->
-        <!-- crossorigin="anonymous"></script> -->
-	<!-- <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script> -->
-	
+<head>
 	<!-- Molstar CSS & JS -->
-    <link crossorigin="anonymous"rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-1.1.0.css">
-    <script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-1.1.0.js"></script>
-	
-    <!-- d3.js dependency script -->
-    <script src="https://cdn.jsdelivr.net/npm/d3@5.9.2"></script>
-    
-    <!-- PDB Topology Viewer JS -->
-    <script type="text/javascript" src="build/pdb-topology-viewer-plugin-2.0.0.js" defer></script>
-	
+	<link crossorigin="anonymous" rel="stylesheet" type="text/css" href="https://www.ebi.ac.uk/pdbe/pdb-component-library/css/pdbe-molstar-1.2.0.css">
+	<script type="text/javascript" src="https://www.ebi.ac.uk/pdbe/pdb-component-library/js/pdbe-molstar-plugin-1.2.0.js"></script>
+
+	<!-- d3.js dependency script -->
+	<script src="https://cdn.jsdelivr.net/npm/d3@5.9.2"></script>
+
+	<!-- PDB Topology Viewer JS -->
+	<script type="text/javascript" src="build/pdb-topology-viewer-plugin-2.0.0.js" defer></script>
+
 	<!-- math.js -->
 	<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/9.4.3/math.min.js" integrity="sha512-h6sl9arHHMneDTSQwIiJ6NUSx3/wGWKr9P25MQCnwmTsPMBHIscEtk/5k/zA+IOjvGQUuvn2003cRhX2BUpgqw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-	
+
 	<!-- OverProt CSS and scripts -->
 	<!-- All links are copied from the overprot.ncbr.muni.cz pages -->
-	<link crossorigin="anonymous" rel='stylesheet' type='text/css' href='https://overprot.ncbr.muni.cz/static/overprot-viewer/overprot-viewer.min.css'>
-	<script type='text/javascript' src='https://overprot.ncbr.muni.cz/static/overprot-viewer/d3.v5.min.js'></script>
-	<script type='text/javascript' src='https://overprot.ncbr.muni.cz/static/overprot-viewer/d3-selection-multi.v1.min.js'></script>
-	<script type='text/javascript' src='https://overprot.ncbr.muni.cz/static/overprot-viewer/overprot-viewer.min.js'></script>
-	
-    <style>
+	<link crossorigin="anonymous" rel='stylesheet' type='text/css' href='/static/overprot-viewer/overprot-viewer.min.css'>
+	<script type='text/javascript' src='/static/overprot-viewer/d3.v5.min.js'></script>
+	<script type='text/javascript' src='/static/overprot-viewer/d3-selection-multi.v1.min.js'></script>
+	<script type='text/javascript' src='/static/overprot-viewer/overprot-viewer.min.js'></script>
+
+	<!-- Bootstrap selects CSS & JS, popper js is required -->
+	<link crossorigin="anonymous" rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css" integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
+	<!-- <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script> -->
+	<script src="https://code.jquery.com/jquery-3.5.1.js" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.form/4.2.2/jquery.form.min.js" integrity="sha384-FzT3vTVGXqf7wRfy8k4BiyzvbNfeYjK+frTVqZeNDFl8woCbF0CYG6g2fMEFFo/i" crossorigin="anonymous"></script>
+	<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js" integrity="sha384-OgVRvuATP1z7JjHLkuOU7Xw704+h835Lr+6QL9UvYjZE3Ipu6Tp75j7Bh/kR0JKI" crossorigin="anonymous"></script>
+
+	<!-- jQuery loading overlay -->
+	<script type='text/javascript' src='https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js'></script>
+
+	<link crossorigin="anonymous" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/css/bootstrap-select.min.css">
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.13.14/dist/js/bootstrap-select.min.js"></script>
+
+	<!--Integrated Viewer-->
+	<script type="text/javascript" src="index.js"></script>
+
+
+	<style>
 		.flex-container {
 			display: flex;
 		}
-		
-        #pdb-topology-viewer {
-            position: relative;
-            width: calc(400px*1.28);
-            height: 400px;
-			margin-left: 50px;
-        }
-		
-		#myViewer{
+
+		#pdb-topology-viewer {
+			/* minus navbar (56px) and overprot-wrapper*/
+			/* without max in case browser does not support it */
+			height: calc(100vh - 70px - 200px);
+			height: max(320px, calc(100vh - 70px - 200px));
+			/*position: relative;
+			width: calc(400px*1.0);
 			height: 400px;
-			margin-left: 50px;
-			width: 500px;
-			position: relative;
+			margin-left: 0px;*/
 		}
-		
+
+		#myViewer {
+			/* minus navbar (56px) and overprot-wrapper*/
+			/* without max in case browser does not support it */
+			height: calc(100vh - 70px - 200px);
+			height: max(320px, calc(100vh - 70px - 200px));
+			/*margin-left: 50px;
+			width: 500px;
+			position: relative;*/
+		}
+
 		#overprot-wrapper {
-			width: 1000px;
+
 			height: 200px;
 		}
-    </style>
 
-  </head>
+		.msp-plugin .msp-btn-link-toggle-off,
+		.msp-plugin .msp-btn-link-toggle-on {
+			background-color: rgb(200, 200, 200) !important;
+		}
 
-  <body>
-    <h4>Demo (1D, 2D, and 3D)</h4>
-	<datalist id="familiesDatalist"></datalist>
-	<datalist id="domainsDatalist"></datalist>
-	<label for="familiesSelector" class="">Protein family (CATH):</label>
-	<input list="familiesDatalist" type="text" id="familiesSelector"
-		placeholder='Please select family'>
-	<label for="domainsSelector" class="">Protein domain:</label>
-	<input list="domainsDatalist" type="text" id="domainsSelector"
-		placeholder='Please select domain'>
-	
-	<div id="overprot-wrapper">
-		<overprot-viewer id='anything' file='https://overprot.ncbr.muni.cz/data/db/diagrams/diagram-2.160.10.30.json'
-		width=1800 height=300 color-method='type' shape-method='symcdf' beta-connectivity='on' occurrence-threshold='25%' dispatch-events='true' listen-events='true'></overprot-viewer>
-	</div>
-	
-    <!-- PDB Topology Viewer container -->
-	<div class="flex-container">
-		<div id="pdb-topology-viewer"></div>
-		<div id="myViewer"></div>
-	</div>
-	
-	<!-- Fetching data for options in selectors -->
-	<script>
-	function loadFamiliesFile() {
-		const path = "https://overprot.ncbr.muni.cz/data/db/families.txt";
-		let content = "";
-		let request = new XMLHttpRequest();
-		request.onreadystatechange = function() {
-			if (request.readyState == 4 && request.status == 200) {
-				content = String(request.responseText);
-			}
+		.msp-plugin .msp-btn-link-toggle-on {
+			color: #637ca0 !important;
 		}
-		request.open("GET", path, false);
-		request.overrideMimeType("text/html");
-		request.send();
-		
-		const arr = content.replace(/\r/g, "").split(/\n/);
-		return arr;
-	}
-	
-	function generateDatalist(arr, datalistEle) {
-		for (let i in arr) {
-			datalistEle.appendChild(new Option(arr[i], arr[i]));
+
+		.msp-plugin .msp-btn-link-toggle-on:hover {
+			color: #51A2FB !important;
 		}
-	}
-	
-	async function getDomainsOptions(familyId) {
-		<!-- CATH family ID, e.g. 1.10.630.10 -->
-		const url = `https://overprot.ncbr.muni.cz/data/db/families/${familyId}/domains.json`;
-		const response = await fetch(url);
-		const json = await response.json();
-		
-		const arr = json.map(domain => domain.domain);
-		console.log(arr);
-		const datalistEle = document.getElementById('domainsDatalist');
-		
-		generateDatalist(arr, datalistEle);
-	}
-	
-	generateDatalist(loadFamiliesFile(), document.getElementById("familiesDatalist"));
-	
-	const familiesSelector = document.getElementById('familiesSelector');
-	familiesSelector.addEventListener('change', function(event) {
-		<!-- console.log(event.target.value); -->
-		getDomainsOptions(event.target.value);
-	});
-	
+	</style>
+
+</head>
+
+<body>
+	<main>
+		<nav class="navbar navbar-expand-lg navbar-dark bg-dark text-white">
+			<a class="navbar-brand" href="./index.html">Integrated Viewer</a>
+			<div class="col">
+				<div class='row'>
+					<div class='col'>
+						<div id='currentFamilyIdEle'></div>
+					</div>
+				</div>
+				<div class='row'>
+					<div class='col'>
+						<div id='currentDomainIdEle'></div>
+					</div>
+				</div>
+			</div>
+			<form id="familyAndDomainForm" class="form-inline ml-auto my-0">
+				<label for="familiesSelector" class="mx-3 pl-3">Protein family (CATH):</label>
+				<select id="familiesSelector" class="mr-3 selectpicker form-control form-control-sm show-tick" data-live-search="true" data-size="5" data-hide-disabled="false" onchange="" data-width="auto"></select>
+
+				<label for="domainsSelector" class="mx-3 pl-3">Protein domain:</label>
+				<select id="domainsSelector" class="mr-3 selectpicker form-control form-control-sm show-tick" data-live-search="true" data-size="5" data-hide-disabled="false" onchange="" data-width="auto"></select>
+
+				<button type="submit" id="submitFamilyAndDomainForm" class="btn btn-primary" disabled>Submit</button>
+			</form>
+		</nav>
+		<div class="container">
+			<div class="row">
+				<div id="overprot-wrapper" class="col">
+				</div>
+			</div>
+
+			<!-- PDB Topology Viewer and PDBe Mol* containers -->
+			<div class="row no-gutters">
+				<div class="col-sm-6">
+					<div id="pdb-topology-viewer"></div>
+				</div>
+				<div class="col-sm-6">
+					<div id="myViewer"></div>
+				</div>
+			</div>
+		</div>
+	</main>
+
+	<script type="text/javascript">
+		const setting = {  
+			// Data source base URL (e.g. 'https://overprot.ncbr.muni.cz'), leave null to use relative URLs instead
+			overprotDatabaseUrl: 'https://overprot.ncbr.muni.cz',
+			// IDs of involved HTML elements
+			view1dDiv: 'overprot-wrapper',
+			view2dDiv: 'pdb-topology-viewer',
+			view3dDiv: 'myViewer',
+			familyAndDomainForm: 'familyAndDomainForm', 
+			familySelect: 'familiesSelector',
+			domainSelect: 'domainsSelector',
+			submitButton: 'submitFamilyAndDomainForm',
+			currentFamilyDiv: 'currentFamilyIdEle',
+			currentDomainDiv: 'currentDomainIdEle',
+			// Family and domain ID, leave null to parse them from URL (?family_id=...&domain_id=...)
+			familyId: null,
+			domainId: null
+		};
+		initOverprotIntegratedViewer(setting);
 	</script>
-	<!-- OverProt script (e.g. events) -->
-	<script>
-	
-		//Create plugin instance
-		const viewerInstance = new PDBeMolstarPlugin();
 
-		//Set options (Checkout available options list in the documentation)
-		var options = {
-			moleculeId: '3oh1',
-			hideControls: true
-		}
-
-		//Get element from HTML/Template to place the viewer 
-		var viewerContainer = document.getElementById('myViewer');
-
-		//Call render method to display the 3D view
-		viewerInstance.render(viewerContainer, options);
-		
-		<!-- TODO: fix, struct_asym_id is not always A -->
-		const targetChainSelection = [{
-			struct_asym_id: 'A', 
-			color:{r:255,g:255,b:255},
-			focus: true,
-		}];
-		
-		viewerInstance.events.loadComplete.subscribe(() => {
-			viewerInstance.visual.select({ data: targetChainSelection, nonSelectedColor: {r:64,g:64,b:64}});
-		});
-		
-		// Upon user hover on Topology Component residue, highlight that residue in MolStar view
-		document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
-			viewerInstance.visual.highlight({ data: [{
-				entity_id: event.eventData['entityId'],
-				struct_asym_id: event.eventData['chainId'],
-				residue_number: event.eventData['residueNumber'],
-			}], color: {r:255,g:0,b:0},});
-		});
-		
-		document.addEventListener('PDB.topologyViewer.mouseout', (event) => {
-			viewerInstance.visual.clearHighlight();
-		});
-		
-		<!-- TODO: add visual highlight based on d and this -->
-		
-		document.addEventListener('PDB.topologyComponent.click', (event) => {
-		});
-		
-		<!-- document.addEventListener('PDB.overprot.select', (event) => { -->
-            <!-- console.log('PDB.overprot.select', event); -->
-            <!-- for (const viewer of document.querySelectorAll('overprot-viewer')) { -->
-                <!-- viewer.dispatchEvent(new CustomEvent('PDB.overprot.do.select', {detail: event.detail})); -->
-            <!-- } -->
-        <!-- }); -->
-		
-		<!-- H5 helix is not present in 2D, so it is not highlighted -->
-        document.addEventListener('PDB.overprot.hover', (event) => {
-			if (event.detail.sses[0]) {
-				console.log('PDB.overprot.hover', event);
-				<!-- TODO: fix console error - offhover overprot shoots another event with .sses = empty array -->
-				const sses = event.detail.sses;
-				
-				let molstarData = sses.map(sse => {
-					<!-- Right now sseLabel selects 4 topo elements (two in mask, one outside of mask (default one), one which is raised above connecting coils). Fixed by adding class to the last one -->
-					const data = d3.select(`#${sse.label}.topologyEleTopLayer`)
-					.attr('fill', 'rgb(211,211,211)')
-					.attr('fill-opacity','1.0')
-					.data()
-					<!-- TODO: add Mol* selection thing -->
-					<!-- data[0] contains data bound to topologyEle, including residues -->
-					console.log(data[0]);
-					<!-- Checking if this SSE exists in 2D view -->
-					if (data[0]) {
-						const molstarSelectionData = {
-						entity_id: data[0].proteinData.entityId,
-						struct_asym_id: data[0].proteinData.chainId,
-						start_residue_number: data[0].start,
-						end_residue_number: data[0].stop,
-						};
-						return molstarSelectionData;
-					} else {
-						console.log(`${sse.label} secondary structure element is not present in selected domain, only in some other proteins of that family.`)
-						return {}
-					}					
-				});
-				
-				molstarData = molstarData.filter(d => Object.keys(d).length !== 0);
-				console.log(molstarData);
-				
-				viewerInstance.visual.highlight({ data: molstarData, color: {r:255,g:0,b:0},});
-				
-			} else {
-				<!-- empty detail.label arr => event was fired onmouseover/offhover -->
-				d3.selectAll('.topologyEle.topologyEleTopLayer')
-				.attr('fill', 'none')
-				.attr('fill-opacity', null)
-				
-				viewerInstance.visual.clearHighlight();
-			}
-        });
-	</script>
-	<!-- PDB Topology component script -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-
-        //Create plugin instance
-        const pluginInstance = new PdbTopologyViewerPlugin();
-
-        //Get element from HTML/Template to place the view
-        const viewContainer = document.getElementById('pdb-topology-viewer');
-
-        const options = {
-          entryId: '3oh1',
-          entityId: '1',
-		  chainId: 'A',
-        } 
-    
-        //Call render method to display the 2D view
-        pluginInstance.render(viewContainer, options);
-		
-		<!-- 2D => 1D hover event listener -->
-		document.addEventListener('PDB.topologyViewer.mouseover', (event) => {
-			<!-- console.log(event) -->
-			document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
-				detail: {
-							'sses': [{'label': event.eventData.parentSSEId}]
-						}
-					}));
-		});
-		
-		document.addEventListener('PDB.topologyViewer.mouseout', (event) => {
-			<!-- console.log(event) -->
-			document.querySelector('overprot-viewer').dispatchEvent(new CustomEvent('PDB.overprot.do.hover', {
-				detail: {
-							'sses': []
-						}
-					}));
-		});
-      });
-      
-    </script>
-	
-	<!-- PDB Mol* component script -->
-	<script>
-      
-	  
-    </script>
-  </body>
+</body>
 
 </html>
