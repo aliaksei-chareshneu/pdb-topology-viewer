@@ -240,8 +240,8 @@ function convert2DProtsJSONtoTopologyAPIJSON(inputJson, entryID, entityID, chain
             'y': upperRight.y - center.y
         };
         var topologyData = {
-            'start': Number(sse[1].residues[0]),
-            'stop': Number(sse[1].residues[1]),
+            'start': Math.min.apply(Math, sse[1].residues),
+            'stop': Math.max.apply(Math, sse[1].residues),
             'majoraxis': Number(sse[1].size),
             'minoraxis': MINORAXIS,
             'center': centerYReversed,
